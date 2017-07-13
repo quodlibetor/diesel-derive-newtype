@@ -42,8 +42,6 @@ that this is fit for purpose.
 
 ## Limitations
 
-* This requires that you have `extern crate diesel` (no renaming) in your crate
-  root
 * I would like to write more tests (that don't require a running database), but
   they're kind of annoying and I can't figure out how to make them work
 * I've only been using it for about an hour, and before this I hadn't actually
