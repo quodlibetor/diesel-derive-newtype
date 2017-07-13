@@ -28,6 +28,18 @@ pub struct MyEntity {
 
 Oooohhh. Ahhhh.
 
+### Using it
+
+Put this in your Cargo.toml:
+
+```toml
+[dependencies]
+diesel-newtype = { git = "https://github.com/quodlibetor/diesel-newtype" }
+```
+
+There'll be a version on crates.io once I've got a bit more confidents sure
+that this is fit for purpose.
+
 ## Limitations
 
 * This requires that you have `extern crate diesel` (no renaming) in your crate
