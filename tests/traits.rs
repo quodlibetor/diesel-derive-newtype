@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate diesel_newtype;
-#[macro_use]
 extern crate diesel;
 
 #[derive(Debug, PartialEq, Eq, DieselNewType)]
@@ -16,14 +15,13 @@ fn can_serialize() {
     assert_eq!(st, vec![0, 0, 0, 0]);
 }
 
-#[allow(dead_code)]
+#[test]
 fn can_deserialize() {
     use diesel::types::FromSql;
     use diesel::backend::Backend;
-    let mut st: [u8; 4] = [0, 0, 0, 0];
-    let mut val = <diesel::sqlite::Sqlite as Backend>::RawValue(&st);
+    let val: &<diesel::pg::Pg as Backend>::RawValue = &[0, 0, 0, 0];
     let myid =
-        <MyId as FromSql<diesel::types::Integer, diesel::sqlite::Sqlite>>::from_sql(Some(&st))
+        <MyId as FromSql<diesel::types::Integer, diesel::pg::Pg>>::from_sql(Some(val))
         .unwrap();
     assert_eq!(myid, MyId(0));
 }

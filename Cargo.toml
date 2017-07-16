@@ -9,7 +9,7 @@ quote = "0.3.10"
 
 [dev-dependencies]
 diesel = { version = "0.14.0", features = ["sqlite"] }
-diesel_codegen = { version = "0.14.0", features = ["sqlite"] }
+diesel_codegen = { version = "0.14.0", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
