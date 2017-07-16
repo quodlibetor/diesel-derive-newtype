@@ -1,0 +1,18 @@
+language: rust
+sudo: false
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+      env: CLIPPY=n
+  include:
+    - rust: nightly
+      env: CLIPPY=y
+env:
+  global:
+    - LD_LIBRARY_PATH: /usr/local/lib
+    - CLIPPY: n
+script: ./.travis.sh

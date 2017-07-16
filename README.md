@@ -2,6 +2,8 @@
 
 Prototype to support newtypes inside of Diesel.
 
+[![Build Status](https://travis-ci.org/quodlibetor/diesel-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-newtype)
+
 ## What it does
 
 This exposes a single custom-derive macro `DieselNewType` which implements
