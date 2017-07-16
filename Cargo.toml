@@ -4,13 +4,12 @@ version = "0.1.0"
 authors = ["Brandon W Maister <bwm@knewton.com>"]
 
 [dependencies]
-diesel = "0.14.0"
 syn = "0.11"
 quote = "0.3.10"
 
 [dev-dependencies]
 diesel = { version = "0.14.0", features = ["sqlite"] }
-diesel_codegen = { version = "0.14.0", features = ["sqlite"] }
+diesel_codegen = { version = "0.14.0", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
