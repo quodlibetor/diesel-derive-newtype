@@ -85,105 +85,30 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn extract_ident(ty: &syn::Ty) -> Result<&syn::Ident, String> {
-    if let &syn::Ty::Path(None, syn::Path { ref segments, .. }) = ty {
-        if let Some(path) = segments.get(0) {
-            return Ok(&path.ident)
-        }
-    }
-    Err(format!("Couldn't extract ident from type: {:?}", ty))
-}
-
-struct SqlRef {
-    /// The diesel type that the wrapped type should use
-    sql_type: quote::Tokens,
-    /// For non-copy types we need to have the ref-version of the type.
-    /// For `String` this is `&'expr str`
-    ref_type: quote::Tokens,
-    /// If the reffed type is there, then we need to ref the value in the borrowed forms
-    /// This is either `&` or nothing
-    reffer: quote::Tokens,
-}
-
-fn sql_type(wrapped_ty: &syn::Ty) -> SqlRef {
-    // TODO: it's unclear if these should be arrays of SqlRefs, originally I
-    // thought that multiple sql types could map to rust types (e.g. Text and
-    // VarChar) but it doesn't seem to be the case (anymore?)
-    match &*extract_ident(wrapped_ty).unwrap().to_string() {
-        "i32" | "i64" | "u32" | "u64" => SqlRef {
-            sql_type: quote! { diesel::types::Integer },
-            ref_type: quote! { #wrapped_ty },
-            reffer: quote::Tokens::default(),
-        },
-        "f32" => SqlRef {
-            sql_type: quote! { diesel::types::Float },
-            ref_type: quote! { #wrapped_ty },
-            reffer: quote::Tokens::default(),
-        },
-        "f64" => SqlRef {
-            sql_type: quote! { diesel::types::Double },
-            ref_type: quote! { #wrapped_ty },
-            reffer: quote::Tokens::default(),
-        },
-        "String" | "str" => SqlRef {
-            sql_type: quote! { diesel::types::Text },
-            ref_type: quote! { &'expr str },
-            reffer: quote! { & },
-        },
-        val => panic!("Don't know how to deal with type: {}", val)
-    }
-}
-
 fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
-    let SqlRef { sql_type, ref_type, reffer } = sql_type(&wrapped_ty);
-
     quote! {
-        impl diesel::expression::AsExpression<#sql_type> for #name
+
+        impl<ST> diesel::expression::AsExpression<ST> for #name
         where
-            #wrapped_ty: diesel::expression::AsExpression<#sql_type>,
+            diesel::expression::bound::Bound<ST, #wrapped_ty>:
+                diesel::expression::Expression<SqlType=ST>,
         {
-            type Expression = diesel::expression::bound::Bound<#sql_type, #wrapped_ty>;
+            type Expression = diesel::expression::bound::Bound<ST, #wrapped_ty>;
 
             fn as_expression(self) -> Self::Expression {
                 diesel::expression::bound::Bound::new(self.0)
             }
         }
 
-        impl<'expr> diesel::expression::AsExpression<#sql_type> for &'expr #name
+        impl<'expr, ST> diesel::expression::AsExpression<ST> for &'expr #name
         where
-            #wrapped_ty: diesel::expression::AsExpression<#sql_type>,
+            diesel::expression::bound::Bound<ST, #wrapped_ty>:
+                diesel::expression::Expression<SqlType=ST>
         {
-            type Expression = diesel::expression::bound::Bound<#sql_type, #ref_type>;
+            type Expression = diesel::expression::bound::Bound<ST, &'expr #wrapped_ty>;
 
             fn as_expression(self) -> Self::Expression {
-                diesel::expression::bound::Bound::new(#reffer self.0)
-            }
-        }
-
-        impl diesel::expression::AsExpression<diesel::types::Nullable<#sql_type>> for #name
-        where
-            #wrapped_ty: diesel::expression::AsExpression<diesel::types::Nullable<#sql_type>>,
-        {
-            type Expression = diesel::expression::bound::Bound<
-                diesel::types::Nullable<#sql_type>, #wrapped_ty>;
-
-            fn as_expression(self) -> Self::Expression {
-                diesel::expression::bound::Bound::new(self.0)
-            }
-        }
-
-        impl<'expr> diesel::expression::AsExpression<diesel::types::Nullable<#sql_type>>
-            for &'expr #name
-        where
-            #wrapped_ty: diesel::expression::AsExpression<#sql_type>,
-        {
-            type Expression = diesel::expression::bound::Bound<
-                diesel::types::Nullable<#sql_type>,
-            #ref_type,
-            >;
-
-            fn as_expression(self) -> Self::Expression {
-                diesel::expression::bound::Bound::new(#reffer self.0)
+                diesel::expression::bound::Bound::new(&self.0)
             }
         }
     }
@@ -228,14 +153,14 @@ fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     quote! {
         impl<ST, DB> diesel::query_source::Queryable<ST, DB> for #name
         where
-            (#wrapped_ty,): diesel::types::FromSqlRow<ST, DB>,
+            #wrapped_ty: diesel::types::FromSqlRow<ST, DB>,
             DB: diesel::backend::Backend,
             DB: diesel::types::HasSqlType<ST>,
         {
-            type Row = (#wrapped_ty,);
+            type Row = #wrapped_ty;
 
             fn build(row: Self::Row) -> Self {
-                #name(row.0)
+                #name(row)
             }
         }
     }

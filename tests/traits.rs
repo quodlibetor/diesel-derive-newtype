@@ -8,7 +8,6 @@ struct MyId(i32);
 #[derive(Debug, PartialEq, DieselNewType)]
 struct MyLargeId(f64);
 
-
 #[test]
 fn can_serialize() {
     use diesel::types::ToSql;
