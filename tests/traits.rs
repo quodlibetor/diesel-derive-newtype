@@ -5,6 +5,9 @@ extern crate diesel;
 #[derive(Debug, PartialEq, Eq, DieselNewType)]
 struct MyId(i32);
 
+#[derive(Debug, PartialEq, DieselNewType)]
+struct MyLargeId(f64);
+
 #[test]
 fn can_serialize() {
     use diesel::types::ToSql;
@@ -24,4 +27,15 @@ fn can_deserialize() {
         <MyId as FromSql<diesel::types::Integer, diesel::pg::Pg>>::from_sql(Some(val))
         .unwrap();
     assert_eq!(myid, MyId(0));
+}
+
+
+#[test]
+fn can_serialize_large() {
+    use diesel::types::ToSql;
+    let mut st: Vec<u8> = Vec::new();
+    let myid = MyLargeId(11f64);
+    <MyLargeId as ToSql<diesel::types::Double, diesel::sqlite::Sqlite>>::to_sql(&myid, &mut st)
+        .unwrap();
+    assert_eq!(st, vec![0, 0, 0, 0, 0, 0, 38, 64]);
 }
