@@ -47,6 +47,9 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
     let from_sqlrow_impl = gen_from_sqlrow(&name, &wrapped_ty);
 
+    // querying
+    let queryable_impl = gen_queryable(&name, &wrapped_ty);
+
     // not sure what this is required for
     let query_id_impl = gen_query_id(&name);
 
@@ -58,6 +61,9 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
 
         #from_sql_impl
         #from_sqlrow_impl
+
+        #queryable_impl
+
         #query_id_impl
     })
 }
@@ -215,7 +221,23 @@ fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
                 diesel::types::FromSql::<ST, DB>::from_sql(row.take())
             }
         }
+    }
+}
 
+fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+    quote! {
+        impl<ST, DB> diesel::query_source::Queryable<ST, DB> for #name
+        where
+            (#wrapped_ty,): diesel::types::FromSqlRow<ST, DB>,
+            DB: diesel::backend::Backend,
+            DB: diesel::types::HasSqlType<ST>,
+        {
+            type Row = (#wrapped_ty,);
+
+            fn build(row: Self::Row) -> Self {
+                #name(row.0)
+            }
+        }
     }
 }
 

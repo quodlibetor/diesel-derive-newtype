@@ -39,8 +39,10 @@ fn does_roundtrip() {
 }
 
 #[allow(dead_code)]
-#[cfg(feature = "currently-broken")]
 fn queryable() {
     let conn = SqliteConnection::establish(":memory:").unwrap();
-    let _: Vec<MyId> = my_entities::table.select(my_entities::columns::id).load(&conn).unwrap();
+    let _: Vec<MyId> = my_entities::table
+        .select(my_entities::columns::id)
+        .load(&conn)
+        .unwrap();
 }
