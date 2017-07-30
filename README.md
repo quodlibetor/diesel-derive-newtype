@@ -7,18 +7,19 @@ Prototype to support newtypes inside of Diesel.
 ## What it does
 
 This exposes a single custom-derive macro `DieselNewType` which implements
-`ToSql`, `FromSql`, `FromSqlRow`, and `QueryId` for the single-field tuple
-struct it is applied to.
+`ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression` and `QueryId` for
+the single-field tuple struct ([NewType][]) it is applied to.
 
 This should be enough for you to use newtypes anywhere you would use their
 underlying types within Diesel.
+
+[NewType]: https://aturon.github.io/features/types/newtype.html
 
 ### Example
 
 ```rust
 #[derive(DieselNewType)] // Doesn't need to be on its own line
-#[derive(Debug)] // required for DieselNewType
-#[derive(Hash, PartialEq, Eq)] // required for other diesel items
+#[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
 struct MyId(i64);
 
 #[derive(Debug, PartialEq, Identifiable, Queryable, Associations)]
@@ -29,6 +30,9 @@ pub struct MyEntity {
 ```
 
 Oooohhh. Ahhhh.
+
+See [tests/db-roundtrips.rs](tests/db-roundtrips.rs) for a more
+complete example.
 
 ### Using it
 
