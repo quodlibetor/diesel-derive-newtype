@@ -41,11 +41,21 @@ complete example.
 
 ### Using it
 
-Put this in your Cargo.toml:
+diesel-newtype supports Diesel 0.14 and 0.15. To use Diesel 0.15 put this in
+your Cargo.toml:
 
 ```toml
-[dependencies]
-diesel-newtype = { git = "https://github.com/quodlibetor/diesel-newtype" }
+[dependencies.diesel-newtype]
+git = "https://github.com/quodlibetor/diesel-newtype"
+```
+
+For Diesel 0.14 you need to do:
+
+```toml
+[dependencies.diesel-newtype]
+git = "https://github.com/quodlibetor/diesel-newtype"
+default-features = false
+features = ["diesel014"]
 ```
 
 There'll be a version on crates.io once I've got a bit more confidence that

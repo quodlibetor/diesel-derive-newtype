@@ -7,9 +7,14 @@ authors = ["Brandon W Maister <bwm@knewton.com>"]
 syn = "0.11"
 quote = "0.3.10"
 
+[features]
+default = ["diesel015"]
+diesel015 = []
+diesel014 = []
+
 [dev-dependencies]
-diesel = { version = "0.14.0", features = ["sqlite"] }
-diesel_codegen = { version = "0.14.0", features = ["sqlite", "postgres"] }
+diesel = { version = "0.15.0", features = ["sqlite"] }
+diesel_codegen = { version = "0.15.0", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
