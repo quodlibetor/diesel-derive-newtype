@@ -10,8 +10,13 @@ This exposes a single custom-derive macro `DieselNewType` which implements
 `ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression` and `QueryId` for
 the single-field tuple struct ([NewType][]) it is applied to.
 
-This should be enough for you to use newtypes anywhere you would use their
-underlying types within Diesel.
+The goal of this project is that you:
+
+* should be enough for you to use newtypes anywhere you would use their
+  underlying types within Diesel. (plausibly successful)
+* Should get the same compile-time guarantees when using your newtypes as
+  expression elements in Diesel as you do in other rust code (not successful,
+  see Limitations, below.)
 
 [NewType]: https://aturon.github.io/features/types/newtype.html
 
@@ -43,18 +48,53 @@ Put this in your Cargo.toml:
 diesel-newtype = { git = "https://github.com/quodlibetor/diesel-newtype" }
 ```
 
-There'll be a version on crates.io once I've got a bit more confidents sure
-that this is fit for purpose.
+There'll be a version on crates.io once I've got a bit more confidence that
+this is fit for purpose.
 
 ## Limitations
 
-* I would like to write more tests (that don't require a running database), but
-  they're kind of annoying and I can't figure out how to make them work
-* I've only been using it for about an hour, and before this I hadn't actually
-  tried sticking my newtypes into the DB via Diesel, so there are probably
-  unknown unknowns
-* Doesn't try to handle generics at all. I haven't encountered generics on
-  newtypes so I didn't bother. They should be easy to add
+* It is not as strongly typed as I'd like. Specifically this works and it
+  really shouldn't:
+
+    ```rust
+    #[derive(Debug, Hash, PartialEq, Eq, DieselNewType)]
+    struct OneId(i64);
+
+    #[derive(Debug, Hash, PartialEq, Eq, DieselNewType)]
+    struct OtherId(i64);
+
+    #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
+    #[table_name="my_entities"]
+    pub struct MyEntity {
+        id: OneId,
+        val: i32,
+    }
+
+    fn darn(conn: &Connection) {
+        // shouldn't allow constructing the wrong type, but does
+        let OtherId: Vec<OtherId> = my_entities
+            .select(id)
+            .filter(id.eq(OtherId(1)))  // shouldn't allow filtering by wrong type
+            .execute(conn).unwrap();
+    }
+    ```
+
+  See [`tests/should-not-compile.rs`](tests/should-not-compile.rs) for the
+  things I think should fail to compile.
+
+  I believe that the root cause of this is that Diesel implements the various
+  expression methods for types that implement `AsExpression`, based on the
+  _SQL_ type, not caring about `self` and `other`'s Rust type matching. That
+  seems like a pretty good decision in general, but it is a bit unfortunate
+  here.
+
+  I hope to find a solution that doesn't involve implementing every
+  `*Expression` trait manually with an extra bound, but for now you have to
+  keep in mind that the Diesel methods basically auto-transmute your data into
+  the underlying SQL type.
+* Not battle tested: I've only been using it for a couple weeks, and before
+  this I hadn't actually tried sticking my newtypes into the DB via Diesel, so
+  there are probably unknown unknowns
 * It seems almost... too... easy...
 
 That said, it does seem to work.
