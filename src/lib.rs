@@ -1,5 +1,56 @@
 #![recursion_limit = "1024"] // the new default in rust 1.19, quote! takes a lot
 
+//! # `#[Derive(DieselNewType)]
+//!
+//! This crate exposes a single custom-derive macro `DieselNewType` which
+//! implements `ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression`
+//! and `QueryId` for the single-field tuple struct ([NewType][]) it is applied
+//! to.
+//!
+//! ## Example
+//!
+//! This implementation:
+//!
+//! ```
+//! #[macro_use]
+//! extern crate diesel_newtype;
+//!
+//! #[derive(DieselNewType)] // Doesn't need to be on its own line
+//! #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
+//! struct MyId(i64);
+//! # fn main() {}
+//! ```
+//!
+//! Allows you to use the `MyId` struct inside your entities as though they were
+//! the underlying type:
+//!
+//! ```
+//! # #[macro_use] extern crate diesel;
+//! # #[macro_use] extern crate diesel_codegen;
+//! # #[macro_use] extern crate diesel_newtype;
+//! # use diesel::prelude::*;
+//! #
+//! table! {
+//!     my_items {
+//!         id -> Integer,
+//!         val -> Integer,
+//!     }
+//! }
+//!
+//! # #[derive(DieselNewType)] // Doesn't need to be on its own line
+//! # #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
+//! # struct MyId(i64);
+//! #[derive(Debug, PartialEq, Identifiable, Queryable, Associations)]
+//! struct MyItem {
+//!     id: MyId,
+//!     val: u8,
+//! }
+//! # fn main() {}
+//! ```
+//!
+//! Oooohhh. Ahhhh.
+//!
+
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -8,6 +59,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 
 #[proc_macro_derive(DieselNewType)]
+#[doc(hidden)]
 pub fn diesel_new_type(input: TokenStream) -> TokenStream {
     let source = input.to_string();
 

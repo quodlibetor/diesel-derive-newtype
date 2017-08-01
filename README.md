@@ -6,31 +6,49 @@ Prototype to support newtypes inside of Diesel.
 
 ## What it does
 
-This exposes a single custom-derive macro `DieselNewType` which implements
-`ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression` and `QueryId` for
-the single-field tuple struct ([NewType][]) it is applied to.
+This crate exposes a single custom-derive macro `DieselNewType` which
+implements `ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression` and
+`QueryId` for the single-field tuple struct ([NewType][]) it is applied to.
 
-The goal of this project is that you:
+The goal of this project is that:
 
-* should be enough for you to use newtypes anywhere you would use their
-  underlying types within Diesel. (plausibly successful)
+* `derive(DieselNewType)` should be enough for you to use newtypes anywhere you
+  would use their underlying types within Diesel. (plausibly successful)
 * Should get the same compile-time guarantees when using your newtypes as
   expression elements in Diesel as you do in other rust code (not successful,
   see Limitations, below.)
 
 [NewType]: https://aturon.github.io/features/types/newtype.html
 
-### Example
+## Example
 
-```rust
+This implementation:
+
+```
+#[macro_use]
+extern crate diesel_newtype;
+
 #[derive(DieselNewType)] // Doesn't need to be on its own line
 #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
 struct MyId(i64);
+# fn main() {}
+```
+
+Allows you to use the `MyId` struct inside your entities as though they were
+the underlying type:
+
+```
+table! {
+    my_items {
+        id -> Integer,
+        val -> Integer,
+    }
+}
 
 #[derive(Debug, PartialEq, Identifiable, Queryable, Associations)]
-pub struct MyEntity {
+struct MyItem {
     id: MyId,
-    something_important: u8,
+    val: u8,
 }
 ```
 
@@ -39,7 +57,7 @@ Oooohhh. Ahhhh.
 See [tests/db-roundtrips.rs](tests/db-roundtrips.rs) for a more
 complete example.
 
-### Using it
+### Installation
 
 diesel-newtype supports Diesel 0.14 and 0.15. To use Diesel 0.15 put this in
 your Cargo.toml:
