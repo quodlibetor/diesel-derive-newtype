@@ -1,7 +1,7 @@
 [package]
 name = "diesel-newtype"
 version = "0.1.0"
-authors = ["Brandon W Maister <bwm@knewton.com>"]
+authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 
 [dependencies]
 syn = "0.11"
