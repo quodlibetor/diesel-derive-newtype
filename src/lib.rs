@@ -68,15 +68,6 @@ pub fn diesel_new_type(input: TokenStream) -> TokenStream {
     expand_sql_types(&ast).parse().unwrap()
 }
 
-fn wrap_item_in_const(const_name: syn::Ident, item: quote::Tokens) -> quote::Tokens {
-    quote! {
-        const #const_name: () = {
-            extern crate diesel;
-            #item
-        };
-    }
-}
-
 fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     let body = match ast.body {
         syn::Body::Enum(_) => {
@@ -102,12 +93,10 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     // querying
     let queryable_impl = gen_queryable(&name, &wrapped_ty);
 
-    // not sure what this is required for
+    // since our query doesn't take varargs it's fine for the DB to cache it
     let query_id_impl = gen_query_id(&name);
 
-    let name = name.to_string().to_uppercase();
-    let dummy_const = format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name).into();
-    wrap_item_in_const(dummy_const, quote! {
+    wrap_impls_in_const(name, quote! {
         #to_sql_impl
         #as_expr_impl
 
@@ -245,5 +234,19 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
                 true
             }
         }
+    }
+}
+
+/// This guarantees that items we generate don't polute the module scope
+///
+/// We use the const name as a form of documentation of the generated code
+fn wrap_impls_in_const(ty_name: &syn::Ident, item: quote::Tokens) -> quote::Tokens {
+    let name = ty_name.to_string().to_uppercase();
+    let dummy_const: syn::Ident = format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name).into();
+    quote! {
+        const #dummy_const: () = {
+            extern crate diesel;
+            #item
+        };
     }
 }
