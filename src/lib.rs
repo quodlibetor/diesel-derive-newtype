@@ -56,9 +56,12 @@ extern crate syn;
 extern crate quote;
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+mod domain;
 
-#[proc_macro_derive(DieselNewType)]
+use proc_macro::TokenStream;
+use syn::{Attribute, Ident, MetaItem, NestedMetaItem};
+
+#[proc_macro_derive(DieselNewType, attributes(sql_type))]
 #[doc(hidden)]
 pub fn diesel_new_type(input: TokenStream) -> TokenStream {
     let source = input.to_string();
@@ -79,35 +82,78 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
         syn::Body::Struct(ref data) => data.fields()[0].clone(),
     };
 
-    let name = &ast.ident;
+    let newtype = &ast.ident;
     let wrapped_ty = body.ty;
+    let sql_domain_type = extract_sql_domain_type(&ast.attrs);
 
     // Required to be able to insert/read from the db, don't allow searching
-    let to_sql_impl = gen_tosql(&name, &wrapped_ty);
-    let as_expr_impl = gen_asexpresions(&name, &wrapped_ty);
+    match sql_domain_type {
+        // these two branches are almost identical, except for the generics in
+        // the impls
+        Some(sdt) => {
+            let to_sql_impl = domain::gen_tosql(&sdt, &newtype, &wrapped_ty);
 
-    // raw deserialization
-    let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
-    let from_sqlrow_impl = gen_from_sqlrow(&name, &wrapped_ty);
+            let as_expr_impl = domain::gen_asexpresions(&sdt, &newtype, &wrapped_ty);
 
-    // querying
-    let queryable_impl = gen_queryable(&name, &wrapped_ty);
+            // raw deserialization
+            let from_sql_impl = domain::gen_from_sql(&sdt, &newtype, &wrapped_ty);
+            let from_sqlrow_impl = domain::gen_from_sqlrow(&sdt, &newtype, &wrapped_ty);
 
-    // since our query doesn't take varargs it's fine for the DB to cache it
-    let query_id_impl = gen_query_id(&name);
+            // querying
+            let queryable_impl = domain::gen_queryable(&sdt, &newtype, &wrapped_ty);
 
-    wrap_impls_in_const(name, quote! {
-        #to_sql_impl
-        #as_expr_impl
+            // since our query doesn't take varargs it's fine for the DB to cache it
+            let query_id_impl = gen_query_id(&newtype);
+            let domain_query_id_impl = gen_query_id(&sdt.domain_ty);
 
-        #from_sql_impl
-        #from_sqlrow_impl
+            let query_fragment_impl = domain::gen_query_fragment(&sdt, &newtype, &wrapped_ty);
 
-        #queryable_impl
+            wrap_impls_in_const(newtype, quote! {
+                #to_sql_impl
+                #as_expr_impl
 
-        #query_id_impl
-    })
+                #from_sql_impl
+                #from_sqlrow_impl
+
+                #queryable_impl
+
+                #query_id_impl
+                #domain_query_id_impl
+
+                #query_fragment_impl
+            })
+        }
+
+        None => {
+            let to_sql_impl = gen_tosql(&newtype, &wrapped_ty);
+
+            let as_expr_impl = gen_asexpresions(&newtype, &wrapped_ty);
+
+            // raw deserialization
+            let from_sql_impl = gen_from_sql(&newtype, &wrapped_ty);
+            let from_sqlrow_impl = gen_from_sqlrow(&newtype, &wrapped_ty);
+
+            // querying
+            let queryable_impl = gen_queryable(&newtype, &wrapped_ty);
+
+            // since our query doesn't take varargs it's fine for the DB to cache it
+            let query_id_impl = gen_query_id(&newtype);
+            wrap_impls_in_const(newtype, quote! {
+                #to_sql_impl
+                #as_expr_impl
+
+                #from_sql_impl
+                #from_sqlrow_impl
+
+                #queryable_impl
+
+                #query_id_impl
+            })
+        }
+    }
 }
+
+// Generators
 
 #[cfg(feature = "diesel015")]
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
@@ -235,6 +281,40 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
             }
         }
     }
+}
+
+// sql_type generators
+
+// Helpers
+
+struct SqlDomainType<'a> {
+    /// The type that we are implementing for
+    domain_ty: &'a Ident,
+    /// The type that we can forward an imple for
+    ///
+    /// e.g. `diesel::types::Text`
+    diesel_ty: &'a Ident,
+}
+
+fn extract_sql_domain_type(attrs: &[Attribute]) -> Option<SqlDomainType> {
+    for attr in attrs {
+        match attr.value {
+            MetaItem::List(ref ident, ref params) if ident == "sql_type" => {
+                if params.len() != 2 {
+                    panic!("sql_type(Type) must include exactly two types, found {}",
+                           quote!(#params));
+                }
+                match (&params[0], &params[1]) {
+                    (&NestedMetaItem::MetaItem(MetaItem::Word(ref domain_ty)),
+                     &NestedMetaItem::MetaItem(MetaItem::Word(ref diesel_ty)),
+                    ) => return Some(SqlDomainType { domain_ty, diesel_ty }),
+                    _ => panic!("Unexpected format for sql_type: {} ", quote!(#params)),
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 /// This guarantees that items we generate don't polute the module scope
