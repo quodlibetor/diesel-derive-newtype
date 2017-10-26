@@ -109,7 +109,6 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     })
 }
 
-#[cfg(feature = "diesel015")]
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     quote! {
         impl<ST, DB> diesel::types::ToSql<ST, DB> for #name
@@ -119,24 +118,6 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             DB: diesel::types::HasSqlType<ST>,
         {
             fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::types::ToSqlOutput<W, DB>)
-            -> Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
-            {
-                self.0.to_sql(out)
-            }
-        }
-    }
-}
-
-#[cfg(feature = "diesel014")]
-fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
-    quote! {
-        impl<ST, DB> diesel::types::ToSql<ST, DB> for #name
-        where
-            #wrapped_ty: diesel::types::ToSql<ST, DB>,
-            DB: diesel::backend::Backend,
-            DB: diesel::types::HasSqlType<ST>,
-        {
-            fn to_sql<W: ::std::io::Write>(&self, out: &mut W)
             -> Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
             {
                 self.0.to_sql(out)

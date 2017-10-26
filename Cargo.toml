@@ -6,15 +6,11 @@ authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 [dependencies]
 syn = "0.11"
 quote = "0.3.10"
-
-[features]
-default = ["diesel015"]
-diesel015 = []
-diesel014 = []
+diesel = "<0.17,>=0.15.0"
 
 [dev-dependencies]
-diesel = { version = "0.15.0", features = ["sqlite"] }
-diesel_codegen = { version = "0.15.0", features = ["sqlite", "postgres"] }
+diesel = { version = "<0.17,>=0.15.0", features = ["sqlite"] }
+diesel_codegen = { version = "<0.17,>=0.15.0", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
