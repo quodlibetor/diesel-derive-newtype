@@ -13,7 +13,7 @@
 //!
 //! ```
 //! #[macro_use]
-//! extern crate diesel_newtype;
+//! extern crate diesel_derive_newtype;
 //!
 //! #[derive(DieselNewType)] // Doesn't need to be on its own line
 //! #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
@@ -27,7 +27,7 @@
 //! ```
 //! # #[macro_use] extern crate diesel;
 //! # #[macro_use] extern crate diesel_codegen;
-//! # #[macro_use] extern crate diesel_newtype;
+//! # #[macro_use] extern crate diesel_derive_newtype;
 //! # use diesel::prelude::*;
 //! #
 //! table! {

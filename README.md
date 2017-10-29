@@ -26,7 +26,7 @@ This implementation:
 
 ```
 #[macro_use]
-extern crate diesel_newtype;
+extern crate diesel_derive_newtype;
 
 #[derive(DieselNewType)] // Doesn't need to be on its own line
 #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
