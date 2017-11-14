@@ -211,9 +211,6 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
     quote! {
         impl diesel::query_builder::QueryId for #name {
             type QueryId = Self;
-            fn has_static_query_id() -> bool {
-                true
-            }
         }
     }
 }

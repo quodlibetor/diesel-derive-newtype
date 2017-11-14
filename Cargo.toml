@@ -2,15 +2,19 @@
 name = "diesel-derive-newtype"
 version = "0.1.0"
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
+license = "Apache-2.0/MIT"
+readme = "README.md"
+categories = []
 
 [dependencies]
 syn = "0.11"
 quote = "0.3.10"
-diesel = "<0.17,>=0.15.0"
+# support 0.16 because version hasn't been bumped in master yet
+diesel = "<0.18,>=0.16"
 
 [dev-dependencies]
-diesel = { version = "<0.17,>=0.15.0", features = ["sqlite"] }
-diesel_codegen = { version = "<0.17,>=0.15.0", features = ["sqlite", "postgres"] }
+diesel = { git = "https://github.com/diesel-rs/diesel", features = ["sqlite"] }
+diesel_codegen = { git = "https://github.com/diesel-rs/diesel", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
