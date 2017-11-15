@@ -13,8 +13,8 @@ quote = "0.3.10"
 diesel = "<0.18,>=0.16"
 
 [dev-dependencies]
-diesel = { git = "https://github.com/diesel-rs/diesel", features = ["sqlite"] }
-diesel_codegen = { git = "https://github.com/diesel-rs/diesel", features = ["sqlite", "postgres"] }
+diesel = { version = ">=0.16.0,<0.18", features = ["sqlite"] }
+diesel_codegen = { version = ">=0.16.0,<0.18", features = ["sqlite", "postgres"] }
 
 [lib]
 proc-macro = true
