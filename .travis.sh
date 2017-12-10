@@ -40,6 +40,14 @@ run_clippy() {
     cargo clippy -- -Dclippy
 }
 
+check_readme() {
+    # it's fine if this is already installed, anything else will cause an error
+    # on the next line
+    channel install cargo-readme || echo ignoring install problems
+    channel readme --output README.md
+    (set -x; git diff --exit-code -- README.md) ; echo $?
+}
+
 CHANNEL=nightly
 if [ "x${CLIPPY}" = xy ] ; then
     run_clippy
@@ -51,4 +59,8 @@ CHANNEL=beta
 run_test
 
 CHANNEL=stable
-run_test
+if [ "x${CHECK_README}" = xy ] ; then
+    check_readme
+else
+    run_test
+fi
