@@ -3,7 +3,7 @@
 #[macro_use] extern crate diesel_derive_newtype;
 
 use diesel::prelude::*;
-use diesel::expression::sql;
+use diesel::dsl::sql;
 use diesel::sqlite::SqliteConnection;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, DieselNewType)]
@@ -40,8 +40,8 @@ fn does_roundtrip() {
     let conn = setup();
     let obj = MyEntity { id: MyId("WooHoo".into()), val: 1 };
 
-    diesel::insert(&obj)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&obj)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
@@ -59,8 +59,8 @@ fn queryable() {
         MyEntity { id: MyId("boo".into()), val: 2 },
     ];
 
-    diesel::insert(&objs)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&objs)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
@@ -82,8 +82,8 @@ fn query_as_id() {
         MyEntity { id: MyId("boo".into()), val: 2 },
     ];
 
-    diesel::insert(&objs)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&objs)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
@@ -104,8 +104,8 @@ fn query_as_underlying_type() {
         MyEntity { id: MyId("boo".into()), val: 2 },
     ];
 
-    diesel::insert(&objs)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&objs)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
@@ -126,8 +126,8 @@ fn set() {
         MyEntity { id: MyId("boo".into()), val: 2 },
     ];
 
-    diesel::insert(&objs)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&objs)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
