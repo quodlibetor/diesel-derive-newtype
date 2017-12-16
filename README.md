@@ -2,7 +2,7 @@
 
 Easy-peasy support of newtypes inside of Diesel.
 
-[![Build Status](https://travis-ci.org/quodlibetor/diesel-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-newtype)
+[![Build Status](https://travis-ci.org/quodlibetor/diesel-derive-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-derive-newtype)
 
 ## `#[derive(DieselNewType)]`
 
