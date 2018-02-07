@@ -4,7 +4,13 @@ version = "0.1.0"
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 license = "Apache-2.0/MIT"
 readme = "README.md"
-categories = []
+categories = ["database", "rust-patterns"]
+keywords = ["newtype", "derive"]
+description = "Automatically connect newtypes to Diesel using their wrapped type"
+repository = "https://github.com/quodlibetor/diesel-derive-newtype"
+
+[badges]
+travis-ci = { repository = "quodlibetor/diesel-derive-newtype", branch = "master" }
 
 [dependencies]
 syn = "0.11"
