@@ -1,13 +1,23 @@
 #![recursion_limit = "1024"] // the new default in rust 1.19, quote! takes a lot
 
-//! # `#[Derive(DieselNewType)]
+//! # `#[derive(DieselNewType)]`
 //!
 //! This crate exposes a single custom-derive macro `DieselNewType` which
 //! implements `ToSql`, `FromSql`, `FromSqlRow`, `Queryable`, `AsExpression`
 //! and `QueryId` for the single-field tuple struct ([NewType][]) it is applied
 //! to.
 //!
-//! ## Example
+//! The goal of this project is that:
+//!
+//! * `derive(DieselNewType)` should be enough for you to use newtypes anywhere you
+//!   would use their underlying types within Diesel. (plausibly successful)
+//! * Should get the same compile-time guarantees when using your newtypes as
+//!   expression elements in Diesel as you do in other rust code (depends on
+//!   your desires, see [Limitations][], below.)
+//!
+//! [NewType]: https://aturon.github.io/features/types/newtype.html
+//!
+//! # Example
 //!
 //! This implementation:
 //!
@@ -26,10 +36,8 @@
 //!
 //! ```
 //! # #[macro_use] extern crate diesel;
-//! # #[macro_use] extern crate diesel_codegen;
 //! # #[macro_use] extern crate diesel_derive_newtype;
 //! # use diesel::prelude::*;
-//! #
 //! table! {
 //!     my_items {
 //!         id -> Integer,
@@ -50,6 +58,65 @@
 //!
 //! Oooohhh. Ahhhh.
 //!
+//! See [the tests][] for a more complete example.
+//!
+//! [the tests]: https://github.com/quodlibetor/diesel-derive-newtype/blob/master/tests/db-roundtrips.rs
+//!
+//! # Limitations
+//! [limitations]: #limitations
+//!
+//! The `DieselNewtype` derive does not create new _database_ types, or Diesel
+//! serialization types. That is, if you have a `MyId(i64)`, this will use
+//! Diesel's underlying `BigInt` type, which means that even though your
+//! newtypes can be used anywhere the underlying type can be used, *the
+//! underlying types, or any other newtypes of the same underlying type, can be
+//! used as well*.
+//!
+//! At a certain point everything does become bits on the wire, so if we didn't
+//! do it this way then Diesel would have to do it somewhere else, and this is
+//! reasonable default behavior (it's pretty debuggable), but I'm investigating
+//! auto-generating new proxy types as well to make it impossible to construct
+//! an insert statement using a tuple or a mis-typed struct.
+//!
+//! Here's an example of that this type-hole looks like:
+//!
+//! ```rust,ignore
+//! #[derive(Debug, Hash, PartialEq, Eq, DieselNewType)]
+//! struct OneId(i64);
+//!
+//! #[derive(Debug, Hash, PartialEq, Eq, DieselNewType)]
+//! struct OtherId(i64);
+//!
+//! #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
+//! #[table_name="my_entities"]
+//! pub struct MyEntity {
+//!     id: OneId,
+//!     val: i32,
+//! }
+//!
+//! fn darn(conn: &Connection) {
+//!     // shouldn't allow constructing the wrong type, but does
+//!     let OtherId: Vec<OtherId> = my_entities
+//!         .select(id)
+//!         .filter(id.eq(OtherId(1)))  // shouldn't allow filtering by wrong type
+//!         .execute(conn).unwrap();
+//! }
+//! ```
+//!
+//! See [`tests/should-not-compile.rs`](tests/should-not-compile.rs) for the
+//! things I think should fail to compile.
+//!
+//! I believe that the root cause of this is that Diesel implements the various
+//! expression methods for types that implement `AsExpression`, based on the
+//! _SQL_ type, not caring about `self` and `other`'s Rust type matching. That
+//! seems like a pretty good decision in general, but it is a bit unfortunate
+//! here.
+//!
+//! I hope to find a solution that doesn't involve implementing every
+//! `*Expression` trait manually with an extra bound, but for now you have to
+//! keep in mind that the Diesel methods basically auto-transmute your data into
+//! the underlying SQL type.
+
 
 extern crate syn;
 #[macro_use]
@@ -117,6 +184,9 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             DB: diesel::backend::Backend,
             DB: diesel::types::HasSqlType<ST>,
         {
+            // TODO: Update this to new types after Diesel 1.1 has been out for 3 months
+            // (around April)
+            #[allow(deprecated)]
             fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::types::ToSqlOutput<W, DB>)
             -> Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
             {
@@ -211,9 +281,6 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
     quote! {
         impl diesel::query_builder::QueryId for #name {
             type QueryId = Self;
-            fn has_static_query_id() -> bool {
-                true
-            }
         }
     }
 }

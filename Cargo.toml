@@ -2,15 +2,20 @@
 name = "diesel-derive-newtype"
 version = "0.1.0"
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
+license = "Apache-2.0/MIT"
+readme = "README.md"
+categories = []
 
 [dependencies]
 syn = "0.11"
 quote = "0.3.10"
-diesel = "<0.17,>=0.15.0"
+diesel = "1"
 
 [dev-dependencies]
-diesel = { version = "<0.17,>=0.15.0", features = ["sqlite"] }
-diesel_codegen = { version = "<0.17,>=0.15.0", features = ["sqlite", "postgres"] }
+diesel = { version = "1", features = ["sqlite"] }
 
 [lib]
 proc-macro = true
+# required by cargo-readme until this is merged:
+# https://github.com/livioribeiro/cargo-readme/pull/16
+path = "src/lib.rs"

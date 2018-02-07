@@ -2,11 +2,10 @@
 //! not
 
 #[macro_use] extern crate diesel;
-#[macro_use] extern crate diesel_codegen;
 #[macro_use] extern crate diesel_derive_newtype;
 
 use diesel::prelude::*;
-use diesel::expression::sql;
+use diesel::dsl::sql;
 use diesel::sqlite::SqliteConnection;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, DieselNewType)]
@@ -33,7 +32,7 @@ table! {
 #[cfg(test)]
 fn setup() -> SqliteConnection {
     let conn = SqliteConnection::establish(":memory:").unwrap();
-    let setup = sql::<diesel::types::Bool>(
+    let setup = sql::<diesel::sql_types::Bool>(
         "CREATE TABLE IF NOT EXISTS my_entities (
                 id TEXT PRIMARY KEY,
                 val Int
@@ -51,8 +50,8 @@ fn setup_with_items() -> (SqliteConnection, Vec<MyEntity>) {
         MyEntity { id: MyId("boo".into()), val: 2 },
     ];
 
-    diesel::insert(&objs)
-        .into(my_entities::table)
+    diesel::insert_into(my_entities::table)
+        .values(&objs)
         .execute(&conn)
         .expect("Couldn't insert struct into my_entities");
 
