@@ -9,12 +9,10 @@ categories = []
 [dependencies]
 syn = "0.11"
 quote = "0.3.10"
-# Assuming 0.99 follows the contract it claims this should work with 1.0, too
-diesel = ">=0.16,<1.0"
+diesel = ">=0.16,<2.0"
 
 [dev-dependencies]
-diesel = { version = ">=0.16.0,<1.0", features = ["sqlite"] }
-diesel_codegen = { version = ">=0.16.0,<1.0", features = ["sqlite", "postgres"] }
+diesel = { version = ">=0.16.0,<2.0", features = ["sqlite"] }
 
 [lib]
 proc-macro = true

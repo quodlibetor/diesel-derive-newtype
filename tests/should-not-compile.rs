@@ -2,7 +2,6 @@
 //! not
 
 #[macro_use] extern crate diesel;
-#[macro_use] extern crate diesel_codegen;
 #[macro_use] extern crate diesel_derive_newtype;
 
 use diesel::prelude::*;

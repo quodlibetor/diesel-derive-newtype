@@ -1,5 +1,4 @@
 #[macro_use] extern crate diesel as gasoline;
-#[macro_use] extern crate diesel_codegen;
 #[macro_use] extern crate diesel_derive_newtype;
 
 use gasoline::prelude::*;
