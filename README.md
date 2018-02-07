@@ -2,7 +2,7 @@
 
 Easy-peasy support of newtypes inside of Diesel.
 
-[![Build Status](https://travis-ci.org/quodlibetor/diesel-derive-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-derive-newtype)
+[![Build Status](https://travis-ci.org/quodlibetor/diesel-derive-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-derive-newtype) [![Crates.io Version](https://img.shields.io/crates/v/diesel-derive-newtype.svg)](https://crates.io/crates/diesel-derive-newtype)
 
 ## `#[derive(DieselNewType)]`
 
@@ -119,7 +119,7 @@ diesel-derive-newtype supports Diesel 0.16 - 0.99.
 
 ```toml
 [dependencies]
-diesel-newtype = { git = "https://github.com/quodlibetor/diesel-newtype" }
+diesel-newtype = "0.1"
 ```
 
 ## License
