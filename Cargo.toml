@@ -9,10 +9,10 @@ categories = []
 [dependencies]
 syn = "0.11"
 quote = "0.3.10"
-diesel = ">=0.16,<2.0"
+diesel = "1"
 
 [dev-dependencies]
-diesel = { version = ">=0.16.0,<2.0", features = ["sqlite"] }
+diesel = { version = "1", features = ["sqlite"] }
 
 [lib]
 proc-macro = true

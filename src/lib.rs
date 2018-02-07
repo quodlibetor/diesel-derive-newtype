@@ -184,6 +184,9 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             DB: diesel::backend::Backend,
             DB: diesel::types::HasSqlType<ST>,
         {
+            // TODO: Update this to new types after Diesel 1.1 has been out for 3 months
+            // (around April)
+            #[allow(deprecated)]
             fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::types::ToSqlOutput<W, DB>)
             -> Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
             {

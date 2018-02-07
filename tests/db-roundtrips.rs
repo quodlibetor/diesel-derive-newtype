@@ -25,7 +25,7 @@ table! {
 #[cfg(test)]
 fn setup() -> SqliteConnection {
     let conn = SqliteConnection::establish(":memory:").unwrap();
-    let setup = sql::<diesel::types::Bool>(
+    let setup = sql::<diesel::sql_types::Bool>(
         "CREATE TABLE IF NOT EXISTS my_entities (
                 id TEXT PRIMARY KEY,
                 val Int
