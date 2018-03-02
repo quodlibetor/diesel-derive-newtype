@@ -188,7 +188,7 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             // (around April)
             #[allow(deprecated)]
             fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::types::ToSqlOutput<W, DB>)
-            -> Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
+            -> ::std::result::Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
             {
                 self.0.to_sql(out)
             }
@@ -234,7 +234,7 @@ fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             DB: diesel::types::HasSqlType<ST>,
         {
             fn from_sql(raw: Option<&<DB as diesel::backend::Backend>::RawValue>)
-            -> Result<Self, Box<::std::error::Error + Send + Sync>>
+            -> ::std::result::Result<Self, Box<::std::error::Error + Send + Sync>>
             {
                 diesel::types::FromSql::<ST, DB>::from_sql(raw)
                     .map(#name)
@@ -252,7 +252,7 @@ fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
             DB: diesel::types::HasSqlType<ST>,
         {
             fn build_from_row<R: diesel::row::Row<DB>>(row: &mut R)
-            -> Result<Self, Box<::std::error::Error + Send + Sync>>
+            -> ::std::result::Result<Self, Box<::std::error::Error + Send + Sync>>
             {
                 diesel::types::FromSql::<ST, DB>::from_sql(row.take())
             }
