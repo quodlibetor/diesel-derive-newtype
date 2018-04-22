@@ -163,7 +163,7 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     // since our query doesn't take varargs it's fine for the DB to cache it
     let query_id_impl = gen_query_id(&name);
 
-    wrap_impls_in_const(name, quote! {
+    wrap_impls_in_const(name, &quote! {
         #to_sql_impl
         #as_expr_impl
 
@@ -288,7 +288,7 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
 /// This guarantees that items we generate don't polute the module scope
 ///
 /// We use the const name as a form of documentation of the generated code
-fn wrap_impls_in_const(ty_name: &syn::Ident, item: quote::Tokens) -> quote::Tokens {
+fn wrap_impls_in_const(ty_name: &syn::Ident, item: &quote::Tokens) -> quote::Tokens {
     let name = ty_name.to_string().to_uppercase();
     let dummy_const: syn::Ident = format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name).into();
     quote! {
