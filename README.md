@@ -3,6 +3,7 @@
 Easy-peasy support of newtypes inside of Diesel.
 
 [![Build Status](https://travis-ci.org/quodlibetor/diesel-derive-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-derive-newtype) [![Crates.io Version](https://img.shields.io/crates/v/diesel-derive-newtype.svg)](https://crates.io/crates/diesel-derive-newtype)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fquodlibetor%2Fdiesel-derive-newtype.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fquodlibetor%2Fdiesel-derive-newtype?ref=badge_shield)
 
 ## `#[derive(DieselNewType)]`
 
@@ -134,3 +135,6 @@ diesel-newtype is licensed under either of
 at your option.
 
 Patches and bug reports welcome!
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fquodlibetor%2Fdiesel-derive-newtype.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fquodlibetor%2Fdiesel-derive-newtype?ref=badge_large)
