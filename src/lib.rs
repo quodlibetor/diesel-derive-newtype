@@ -122,32 +122,32 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 extern crate proc_macro;
+extern crate proc_macro2;
 
-use proc_macro::TokenStream;
+use proc_macro2::{Span, TokenStream};
 
 #[proc_macro_derive(DieselNewType)]
 #[doc(hidden)]
-pub fn diesel_new_type(input: TokenStream) -> TokenStream {
-    let source = input.to_string();
+pub fn diesel_new_type(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ast = syn::parse(input).unwrap();
 
-    let ast = syn::parse_derive_input(&source).unwrap();
-
-    expand_sql_types(&ast).parse().unwrap()
+    expand_sql_types(&ast).into()
 }
 
-fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
-    let body = match ast.body {
-        syn::Body::Enum(_) => {
-            panic!("#[derive(DieselNewType)] can only be used with structs with a single field")
-        }
-        syn::Body::Struct(ref data) if data.fields().len() != 1 => {
-            panic!("#[derive(DieselNewType)] can only be used with structs with exactly one field")
-        }
-        syn::Body::Struct(ref data) => data.fields()[0].clone(),
-    };
-
+fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
-    let wrapped_ty = body.ty;
+    let wrapped_ty = match ast.data {
+        syn::Data::Struct(ref data) => {
+            let mut iter = data.fields.iter();
+            match (iter.next(), iter.next()) {
+                (Some(field), None) => &field.ty,
+                (_, _) => panic!(
+                    "#[derive(DieselNewType)] can only be used with structs with exactly one field"
+                ),
+            }
+        }
+        _ => panic!("#[derive(DieselNewType)] can only be used with structs with a single field"),
+    };
 
     // Required to be able to insert/read from the db, don't allow searching
     let to_sql_impl = gen_tosql(&name, &wrapped_ty);
@@ -176,7 +176,7 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> quote::Tokens {
     })
 }
 
-fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
         impl<ST, DB> diesel::types::ToSql<ST, DB> for #name
         where
@@ -196,7 +196,7 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
 
         impl<ST> diesel::expression::AsExpression<ST> for #name
@@ -225,7 +225,7 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
         impl<ST, DB> diesel::types::FromSql<ST, DB> for #name
         where
@@ -243,7 +243,7 @@ fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
         impl<ST, DB> diesel::types::FromSqlRow<ST, DB> for #name
         where
@@ -260,7 +260,7 @@ fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
+fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
         impl<ST, DB> diesel::query_source::Queryable<ST, DB> for #name
         where
@@ -277,7 +277,7 @@ fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Ty) -> quote::Tokens {
     }
 }
 
-fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
+fn gen_query_id(name: &syn::Ident) -> TokenStream {
     quote! {
         impl diesel::query_builder::QueryId for #name {
             type QueryId = Self;
@@ -288,9 +288,12 @@ fn gen_query_id(name: &syn::Ident) -> quote::Tokens {
 /// This guarantees that items we generate don't polute the module scope
 ///
 /// We use the const name as a form of documentation of the generated code
-fn wrap_impls_in_const(ty_name: &syn::Ident, item: &quote::Tokens) -> quote::Tokens {
+fn wrap_impls_in_const(ty_name: &syn::Ident, item: &TokenStream) -> TokenStream {
     let name = ty_name.to_string().to_uppercase();
-    let dummy_const: syn::Ident = format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name).into();
+    let dummy_const = syn::Ident::new(
+        &format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name),
+        Span::call_site(),
+    );
     quote! {
         const #dummy_const: () = {
             extern crate diesel;
