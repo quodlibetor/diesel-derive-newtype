@@ -12,12 +12,12 @@ diesel-derive-newtype supports Diesel 0.16 - 0.99.
 
 ```toml
 [dependencies]
-diesel-newtype = "0.1"
+diesel-derive-newtype = "0.1"
 ```
 
 ## License
 
-diesel-newtype is licensed under either of
+diesel-derive-newtype is licensed under either of
 
  * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
    http://www.apache.org/licenses/LICENSE-2.0)
