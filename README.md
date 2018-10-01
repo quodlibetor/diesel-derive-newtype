@@ -119,7 +119,7 @@ diesel-derive-newtype supports Diesel 0.16 - 0.99.
 
 ```toml
 [dependencies]
-diesel-newtype = "0.1"
+diesel-derive-newtype = "0.1"
 ```
 
 ## License
