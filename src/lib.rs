@@ -176,17 +176,14 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
 
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
-        impl<ST, DB> diesel::types::ToSql<ST, DB> for #name
+        impl<ST, DB> diesel::serialize::ToSql<ST, DB> for #name
         where
-            #wrapped_ty: diesel::types::ToSql<ST, DB>,
+            #wrapped_ty: diesel::serialize::ToSql<ST, DB>,
             DB: diesel::backend::Backend,
-            DB: diesel::types::HasSqlType<ST>,
+            DB: diesel::sql_types::HasSqlType<ST>,
         {
-            // TODO: Update this to new types after Diesel 1.1 has been out for 3 months
-            // (around April)
-            #[allow(deprecated)]
-            fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::types::ToSqlOutput<W, DB>)
-            -> ::std::result::Result<diesel::types::IsNull, Box<::std::error::Error + Send + Sync>>
+            fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::serialize::Output<W, DB>)
+            -> ::std::result::Result<diesel::serialize::IsNull, Box<::std::error::Error + Send + Sync>>
             {
                 self.0.to_sql(out)
             }
@@ -201,6 +198,7 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
         where
             diesel::expression::bound::Bound<ST, #wrapped_ty>:
                 diesel::expression::Expression<SqlType=ST>,
+            ST: diesel::sql_types::SingleValue,
         {
             type Expression = diesel::expression::bound::Bound<ST, #wrapped_ty>;
 
@@ -212,7 +210,8 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
         impl<'expr, ST> diesel::expression::AsExpression<ST> for &'expr #name
         where
             diesel::expression::bound::Bound<ST, #wrapped_ty>:
-                diesel::expression::Expression<SqlType=ST>
+                diesel::expression::Expression<SqlType=ST>,
+            ST: diesel::sql_types::SingleValue,
         {
             type Expression = diesel::expression::bound::Bound<ST, &'expr #wrapped_ty>;
 
@@ -225,16 +224,16 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
 
 fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
-        impl<ST, DB> diesel::types::FromSql<ST, DB> for #name
+        impl<ST, DB> diesel::deserialize::FromSql<ST, DB> for #name
         where
-            #wrapped_ty: diesel::types::FromSql<ST, DB>,
+            #wrapped_ty: diesel::deserialize::FromSql<ST, DB>,
             DB: diesel::backend::Backend,
-            DB: diesel::types::HasSqlType<ST>,
+            DB: diesel::sql_types::HasSqlType<ST>,
         {
-            fn from_sql(raw: Option<&<DB as diesel::backend::Backend>::RawValue>)
+            fn from_sql(raw: Option<&diesel::backend::RawValue<'_, DB>>)
             -> ::std::result::Result<Self, Box<::std::error::Error + Send + Sync>>
             {
-                diesel::types::FromSql::<ST, DB>::from_sql(raw)
+                diesel::deserialize::FromSql::<ST, DB>::from_sql(raw)
                     .map(#name)
             }
         }
@@ -243,11 +242,11 @@ fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
 
 fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
-        impl<ST, DB> diesel::query_source::Queryable<ST, DB> for #name
+        impl<ST, DB> diesel::deserialize::Queryable<ST, DB> for #name
         where
-            #wrapped_ty: diesel::types::FromSqlRow<ST, DB>,
+            #wrapped_ty: diesel::deserialize::FromStaticSqlRow<ST, DB>,
             DB: diesel::backend::Backend,
-            DB: diesel::types::HasSqlType<ST>,
+            DB: diesel::sql_types::HasSqlType<ST>,
         {
             type Row = #wrapped_ty;
 
