@@ -155,7 +155,6 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
 
     // raw deserialization
     let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
-    let from_sqlrow_impl = gen_from_sqlrow(&name, &wrapped_ty);
 
     // querying
     let queryable_impl = gen_queryable(&name, &wrapped_ty);
@@ -168,7 +167,6 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
         #as_expr_impl
 
         #from_sql_impl
-        #from_sqlrow_impl
 
         #queryable_impl
 
@@ -238,23 +236,6 @@ fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
             {
                 diesel::types::FromSql::<ST, DB>::from_sql(raw)
                     .map(#name)
-            }
-        }
-    }
-}
-
-fn gen_from_sqlrow(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
-    quote! {
-        impl<ST, DB> diesel::types::FromSqlRow<ST, DB> for #name
-        where
-            #wrapped_ty: diesel::types::FromSql<ST, DB>,
-            DB: diesel::backend::Backend,
-            DB: diesel::types::HasSqlType<ST>,
-        {
-            fn build_from_row<R: diesel::row::Row<DB>>(row: &mut R)
-            -> ::std::result::Result<Self, Box<::std::error::Error + Send + Sync>>
-            {
-                diesel::types::FromSql::<ST, DB>::from_sql(row.take())
             }
         }
     }
