@@ -19,7 +19,7 @@ quote = "0.6"
 syn = "0.14"
 
 [dev-dependencies]
-diesel = {git = "https://github.com/diesel-rs/diesel", features = ["sqlite"]}
+diesel = {git = "https://github.com/diesel-rs/diesel", rev = "cc8f0b7350347223205f22f40e1e8de1ca442906", features = ["sqlite"]}
 
 [lib]
 proc-macro = true
