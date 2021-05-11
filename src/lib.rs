@@ -250,8 +250,8 @@ fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
         {
             type Row = #wrapped_ty;
 
-            fn build(row: Self::Row) -> Self {
-                #name(row)
+            fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
+                Ok(#name(row))
             }
         }
     }
