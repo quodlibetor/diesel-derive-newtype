@@ -13,13 +13,13 @@ version = "0.1.2"
 travis-ci = {repository = "quodlibetor/diesel-derive-newtype", branch = "master"}
 
 [dependencies]
-diesel = {git = "https://github.com/oeed/diesel", rev = "acd3a9f1cf8e8cfbe6f23535b17a1a44e499e2ce"}
+diesel = {git = "https://github.com/oeed/diesel", rev = "737d152af383d6f260c1cfe4836c52426cce5a41"}
 proc-macro2 = "0.4"
 quote = "0.6"
 syn = "0.14"
 
 [dev-dependencies]
-diesel = {git = "https://github.com/oeed/diesel", rev = "acd3a9f1cf8e8cfbe6f23535b17a1a44e499e2ce", features = ["sqlite"]}
+diesel = {git = "https://github.com/oeed/diesel", rev = "737d152af383d6f260c1cfe4836c52426cce5a41", features = ["sqlite"]}
 
 [lib]
 proc-macro = true
