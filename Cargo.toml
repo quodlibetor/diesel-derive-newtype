@@ -16,7 +16,6 @@ travis-ci = { repository = "quodlibetor/diesel-derive-newtype", branch = "master
 proc-macro2 = "0.4"
 syn = "0.14"
 quote = "0.6"
-diesel = "1"
 
 [dev-dependencies]
 diesel = { version = "1", features = ["sqlite"] }
