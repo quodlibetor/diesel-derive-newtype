@@ -1,10 +1,7 @@
 //! This is a test file that *DOES* compile and pass tests, but which should
 //! not
 
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate diesel_derive_newtype;
+use diesel_derive_newtype::DieselNewType;
 
 use diesel::dsl::sql;
 use diesel::prelude::*;

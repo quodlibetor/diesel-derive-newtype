@@ -277,7 +277,6 @@ fn wrap_impls_in_const(ty_name: &syn::Ident, item: &TokenStream) -> TokenStream 
     );
     quote! {
         const #dummy_const: () = {
-            extern crate diesel;
             #item
         };
     }

@@ -2,6 +2,7 @@
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 categories = ["database", "rust-patterns"]
 description = "Automatically connect newtypes to Diesel using their wrapped type"
+edition = "2018"
 keywords = ["newtype", "derive"]
 license = "Apache-2.0/MIT"
 name = "diesel-derive-newtype"
