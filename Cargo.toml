@@ -15,7 +15,6 @@ version = "0.1.2"
 travis-ci = {repository = "quodlibetor/diesel-derive-newtype", branch = "master"}
 
 [dependencies]
-diesel = {git = "https://github.com/diesel-rs/diesel", rev = "9dc434e7f428d4817d8d576c703df5f808056fd6"}
 proc-macro2 = "0.4"
 quote = "0.6"
 syn = "0.14"

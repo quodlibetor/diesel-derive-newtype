@@ -117,7 +117,6 @@
 //! keep in mind that the Diesel methods basically auto-transmute your data into
 //! the underlying SQL type.
 
-
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -162,16 +161,19 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
     // since our query doesn't take varargs it's fine for the DB to cache it
     let query_id_impl = gen_query_id(&name);
 
-    wrap_impls_in_const(name, &quote! {
-        #to_sql_impl
-        #as_expr_impl
+    wrap_impls_in_const(
+        name,
+        &quote! {
+            #to_sql_impl
+            #as_expr_impl
 
-        #from_sql_impl
+            #from_sql_impl
 
-        #queryable_impl
+            #queryable_impl
 
-        #query_id_impl
-    })
+            #query_id_impl
+        },
+    )
 }
 
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
@@ -182,8 +184,7 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
             DB: diesel::backend::Backend,
             DB: diesel::sql_types::HasSqlType<ST>,
         {
-            fn to_sql<W: ::std::io::Write>(&self, out: &mut diesel::serialize::Output<W, DB>)
-            -> ::std::result::Result<diesel::serialize::IsNull, Box<::std::error::Error + Send + Sync>>
+            fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result
             {
                 self.0.to_sql(out)
             }
