@@ -1,11 +1,7 @@
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate diesel_derive_newtype;
-
 use diesel::dsl::sql;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+use diesel_derive_newtype::DieselNewType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, DieselNewType)]
 pub struct MyId(String);
