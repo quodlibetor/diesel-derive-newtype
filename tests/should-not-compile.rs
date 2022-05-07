@@ -14,7 +14,7 @@ pub struct MyId(String);
 pub struct OtherId(String);
 
 #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
-#[table_name = "my_entities"]
+#[diesel(table_name = my_entities)]
 pub struct MyEntity {
     id: MyId,
     val: i32,

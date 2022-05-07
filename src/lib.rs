@@ -48,7 +48,7 @@
 //! # #[derive(DieselNewType)] // Doesn't need to be on its own line
 //! # #[derive(Debug, Hash, PartialEq, Eq)] // required by diesel
 //! # struct MyId(i64);
-//! #[derive(Debug, PartialEq, Identifiable, Queryable, Associations)]
+//! #[derive(Debug, PartialEq, Identifiable, Queryable)]
 //! struct MyItem {
 //!     id: MyId,
 //!     val: u8,
@@ -88,7 +88,7 @@
 //! struct OtherId(i64);
 //!
 //! #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
-//! #[table_name="my_entities"]
+//! #[diesel(table_name = my_entities)]
 //! pub struct MyEntity {
 //!     id: OneId,
 //!     val: i32,
@@ -197,27 +197,27 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
 
         impl<ST> diesel::expression::AsExpression<ST> for #name
         where
-            diesel::expression::bound::Bound<ST, #wrapped_ty>:
+            diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>:
                 diesel::expression::Expression<SqlType=ST>,
             ST: diesel::sql_types::SingleValue,
         {
-            type Expression = diesel::expression::bound::Bound<ST, #wrapped_ty>;
+            type Expression = diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>;
 
             fn as_expression(self) -> Self::Expression {
-                diesel::expression::bound::Bound::new(self.0)
+                diesel::internal::derives::as_expression::Bound::new(self.0)
             }
         }
 
         impl<'expr, ST> diesel::expression::AsExpression<ST> for &'expr #name
         where
-            diesel::expression::bound::Bound<ST, #wrapped_ty>:
+            diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>:
                 diesel::expression::Expression<SqlType=ST>,
             ST: diesel::sql_types::SingleValue,
         {
-            type Expression = diesel::expression::bound::Bound<ST, &'expr #wrapped_ty>;
+            type Expression = diesel::internal::derives::as_expression::Bound<ST, &'expr #wrapped_ty>;
 
             fn as_expression(self) -> Self::Expression {
-                diesel::expression::bound::Bound::new(&self.0)
+                diesel::internal::derives::as_expression::Bound::new(&self.0)
             }
         }
     }
