@@ -2,7 +2,7 @@
 
 Easy-peasy support of newtypes inside of Diesel.
 
-[![Build Status](https://travis-ci.org/quodlibetor/diesel-derive-newtype.svg?branch=master)](https://travis-ci.org/quodlibetor/diesel-derive-newtype) [![Crates.io Version](https://img.shields.io/crates/v/diesel-derive-newtype.svg)](https://crates.io/crates/diesel-derive-newtype)
+[![Rust](https://github.com/quodlibetor/diesel-derive-newtype/actions/workflows/test.yml/badge.svg?branch=diesel-2)](https://github.com/quodlibetor/diesel-derive-newtype/actions/workflows/test.yml) [![Crates.io Version](https://img.shields.io/crates/v/diesel-derive-newtype.svg)](https://crates.io/crates/diesel-derive-newtype)
 
 ## `#[derive(DieselNewType)]`
 
@@ -45,7 +45,7 @@ table! {
     }
 }
 
-#[derive(Debug, PartialEq, Identifiable, Queryable, Associations)]
+#[derive(Debug, PartialEq, Identifiable, Queryable)]
 struct MyItem {
     id: MyId,
     val: u8,
@@ -84,7 +84,7 @@ struct OneId(i64);
 struct OtherId(i64);
 
 #[derive(Debug, Clone, PartialEq, Identifiable, Insertable, Queryable)]
-#[table_name="my_entities"]
+#[diesel(table_name = my_entities)]
 pub struct MyEntity {
     id: OneId,
     val: i32,
@@ -115,7 +115,8 @@ the underlying SQL type.
 
 ## Installation
 
-diesel-derive-newtype supports Diesel 0.16 - 0.99.
+diesel-derive-newtype supports Diesel according to its major version -- 0.x
+through 1.x support the corresponding diesel versions, 2.x supports diesel 2.x.
 
 ```toml
 [dependencies]
