@@ -1,6 +1,6 @@
 [package]
 name = "diesel-derive-newtype"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 license = "Apache-2.0/MIT"
 readme = "README.md"
@@ -10,7 +10,7 @@ description = "Automatically connect newtypes to Diesel using their wrapped type
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
 
 [badges]
-travis-ci = { repository = "quodlibetor/diesel-derive-newtype", branch = "master" }
+maintenance = { status = "passively-maintained" }
 
 [dependencies]
 proc-macro2 = "0.4"
