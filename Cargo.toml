@@ -13,9 +13,9 @@ repository = "https://github.com/quodlibetor/diesel-derive-newtype"
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-proc-macro2 = "0.4"
-syn = "0.14"
-quote = "0.6"
+proc-macro2 = "1.0.51"
+syn = "1.0.109"
+quote = "1.0.23"
 
 [dev-dependencies]
 diesel = { version = "1", features = ["sqlite"] }
