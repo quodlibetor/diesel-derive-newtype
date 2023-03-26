@@ -1,3 +1,9 @@
+# Unreleased
+
+# 1.0.2
+
+* Update syn to 2.0, bump MSRV to 1.56
+
 # 1.0.1
 
 * Update syn/quote/proc-macro2 dependencies to 1.x
