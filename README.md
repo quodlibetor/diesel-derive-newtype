@@ -23,6 +23,8 @@ And for Diesel 2.x:
 diesel-derive-newtype = "2.0.0-rc.0"
 ```
 
+Note: this crate requires Rust 1.56 due to the dependency on syn 2.x.
+
 ## `#[derive(DieselNewType)]`
 
 This crate exposes a single custom-derive macro `DieselNewType` which

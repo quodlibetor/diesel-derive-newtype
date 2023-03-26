@@ -8,13 +8,15 @@ categories = ["database", "rust-patterns"]
 keywords = ["newtype", "derive"]
 description = "Automatically connect newtypes to Diesel using their wrapped type"
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
+# Inherited MSRV of `syn`.
+rust-version = "1.56"
 
 [badges]
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
 proc-macro2 = "1.0.51"
-syn = "1.0.109"
+syn = "2.0.10"
 quote = "1.0.23"
 
 [dev-dependencies]
