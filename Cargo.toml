@@ -9,11 +9,16 @@ keywords = ["newtype", "derive"]
 license = "Apache-2.0/MIT"
 readme = "README.md"
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
+# Inherited MSRV of `syn`.
+rust-version = "1.56"
 
 [dependencies]
-proc-macro2 = "0.4"
-quote = "0.6"
-syn = "0.14"
+proc-macro2 = "1.0.51"
+syn = "2.0.10"
+quote = "1.0.23"
+
+[badges]
+maintenance = { status = "passively-maintained" }
 
 [dev-dependencies]
 diesel = {version = "2.0.0-rc.0", features = ["sqlite"]}

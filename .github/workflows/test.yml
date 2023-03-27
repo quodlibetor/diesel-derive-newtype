@@ -1,16 +1,16 @@
 name: Rust
 on:
   push:
-    branches: [master, main, diesel-2]
+    branches: [main, diesel-2]
   pull_request:
-    branches: [master, main, diesel-2]
+    branches: [main, diesel-2]
 env:
   CARGO_TERM_COLOR: always
 jobs:
   test:
     strategy:
       matrix:
-        rust_version: [1.52.1, stable, beta]
+        rust_version: [1.56.0, stable, beta]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
