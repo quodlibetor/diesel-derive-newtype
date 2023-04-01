@@ -1,9 +1,10 @@
 name: Rust
 on:
   push:
-    branches: [main, diesel-2]
+    branches: [main, v1]
   pull_request:
-    branches: [main, diesel-2]
+    branches: [main, v1]
+
 env:
   CARGO_TERM_COLOR: always
 jobs:
