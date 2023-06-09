@@ -11,7 +11,7 @@ jobs:
   test:
     strategy:
       matrix:
-        rust_version: [1.56.0, stable, beta]
+        rust_version: [1.65.0, stable, beta]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

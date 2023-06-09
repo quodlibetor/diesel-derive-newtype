@@ -10,7 +10,7 @@ license = "Apache-2.0/MIT"
 readme = "README.md"
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
 # Inherited MSRV of `syn`.
-rust-version = "1.56"
+rust-version = "1.65"
 
 [dependencies]
 proc-macro2 = "1.0.51"
@@ -21,7 +21,7 @@ quote = "1.0.23"
 maintenance = { status = "passively-maintained" }
 
 [dev-dependencies]
-diesel = {version = "2.0.0", features = ["sqlite"]}
+diesel = { version = "2.1.0", features = ["sqlite"], default-features = false }
 
 [lib]
 proc-macro = true
