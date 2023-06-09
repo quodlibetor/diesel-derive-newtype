@@ -1,5 +1,10 @@
 # Unreleased
 
+# 2.0.1
+
+* Bind diesel-derive-newtype 2.0.x to diesel 2.0.x, Diesel 2.1 has trait bounds that are
+  non-obvious to make compatible with 2.0.
+
 # 2.0.0
 
 * Support diesel 2.0. diesel-derive-newtype v1.* supports Diesel 1.* and v2.* supports Diesel 2.*
