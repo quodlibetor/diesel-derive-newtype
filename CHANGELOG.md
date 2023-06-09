@@ -1,8 +1,13 @@
 # Unreleased
 
+# 2.1.0
+
+* Update for Diesel 2.1 (`@marhag87`), not compatible with Diesel 2.0.x.
+* Bump MSRV to 1.65, because that is Diesel's MSRV.
+
 # 2.0.1
 
-* Bind diesel-derive-newtype 2.0.x to diesel 2.0.x, Diesel 2.1 has trait bounds that are
+* Bind diesel-derive-newtype 2.0.x to Diesel 2.0.x, Diesel 2.1 has trait bounds that are
   non-obvious to make compatible with 2.0.
 
 # 2.0.0
