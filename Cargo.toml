@@ -21,7 +21,7 @@ quote = "1.0.23"
 maintenance = { status = "passively-maintained" }
 
 [dev-dependencies]
-diesel = {version = "2.0.0", features = ["sqlite"]}
+diesel = {version = "2.1.0", features = ["sqlite"]}
 
 [lib]
 proc-macro = true
