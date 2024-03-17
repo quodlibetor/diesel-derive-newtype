@@ -150,7 +150,7 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
 
     // Required to be able to insert/read from the db, don't allow searching
     let to_sql_impl = gen_tosql(&name, &wrapped_ty);
-    let as_expr_impl = gen_asexpresions(&name, &wrapped_ty);
+    let as_expr_impl = gen_asexpressions(&name, &wrapped_ty);
 
     // raw deserialization
     let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
@@ -192,7 +192,7 @@ fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     }
 }
 
-fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
+fn gen_asexpressions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     quote! {
 
         impl<ST> diesel::expression::AsExpression<ST> for #name
@@ -201,10 +201,10 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
                 diesel::expression::Expression<SqlType=ST>,
             ST: diesel::sql_types::SingleValue,
         {
-            type Expression = diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>;
+            type Expression = diesel::internal::derives::as_expression::Bound<ST, Self>;
 
             fn as_expression(self) -> Self::Expression {
-                diesel::internal::derives::as_expression::Bound::new(self.0)
+                diesel::internal::derives::as_expression::Bound::new(self)
             }
         }
 
@@ -214,10 +214,23 @@ fn gen_asexpresions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
                 diesel::expression::Expression<SqlType=ST>,
             ST: diesel::sql_types::SingleValue,
         {
-            type Expression = diesel::internal::derives::as_expression::Bound<ST, &'expr #wrapped_ty>;
+            type Expression = diesel::internal::derives::as_expression::Bound<ST, Self>;
 
             fn as_expression(self) -> Self::Expression {
-                diesel::internal::derives::as_expression::Bound::new(&self.0)
+                diesel::internal::derives::as_expression::Bound::new(self)
+            }
+        }
+
+        impl<'expr2, 'expr, ST> diesel::expression::AsExpression<ST> for &'expr2 &'expr #name
+        where
+            diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>:
+                diesel::expression::Expression<SqlType=ST>,
+            ST: diesel::sql_types::SingleValue,
+        {
+            type Expression = diesel::internal::derives::as_expression::Bound<ST, Self>;
+
+            fn as_expression(self) -> Self::Expression {
+                diesel::internal::derives::as_expression::Bound::new(self)
             }
         }
     }

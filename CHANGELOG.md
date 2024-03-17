@@ -1,5 +1,18 @@
 # Unreleased
 
+* Add support for structs with internal references to DieselNewTypes (`ethan-lowman-fp` [#30](https://github.com/quodlibetor/diesel-derive-newtype/pull/30)):
+
+  ```rust
+  #[derive(DieselNewType)]
+  pub struct MyIdString(String); 
+ 
+  #[derive(Insertable, Queryable)]
+  #[diesel(table_name = my_entities)]
+  pub struct NewMyEntity<'a> {
+      id: &'a MyIdString,  // <-- &'a of DieselNewType
+  }
+  ```
+
 # 2.1.0
 
 * Update for Diesel 2.1 (`@marhag87`), not compatible with Diesel 2.0.x.
