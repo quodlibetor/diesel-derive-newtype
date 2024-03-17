@@ -221,8 +221,7 @@ fn gen_asexpressions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
             }
         }
 
-        impl<
-            'expr2, 'expr, ST> diesel::expression::AsExpression<ST> for &'expr2 &'expr #name
+        impl<'expr2, 'expr, ST> diesel::expression::AsExpression<ST> for &'expr2 &'expr #name
         where
             diesel::internal::derives::as_expression::Bound<ST, #wrapped_ty>:
                 diesel::expression::Expression<SqlType=ST>,

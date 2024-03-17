@@ -27,7 +27,7 @@ pub struct MyEntity {
 
 #[derive(Debug, Clone, PartialEq, Insertable)]
 #[diesel(table_name = my_entities)]
-pub struct NewMyEntity<'a> {
+pub struct MyEntityInternalRefs<'a> {
     id: &'a MyIdString,
     my_i32: MyI32,
     my_nullable_string: &'a MyNullableString,
@@ -49,7 +49,7 @@ table! {
 fn setup() -> SqliteConnection {
     let mut conn = SqliteConnection::establish(":memory:").unwrap();
     let setup = sql::<diesel::sql_types::Bool>(
-        "CREATE TABLE IF NOT EXISTS my_entities (
+        "CREATE TABLE my_entities (
                 id TEXT PRIMARY KEY,
                 my_i32 int NOT NULL,
                 my_nullable_string TEXT,
@@ -85,7 +85,7 @@ fn does_roundtrip() {
 #[test]
 fn does_roundtrip_with_ref() {
     let mut conn = setup();
-    let obj = NewMyEntity {
+    let obj = MyEntityInternalRefs {
         id: &MyIdString("WooHoo".into()),
         my_i32: MyI32(10),
         my_nullable_string: &MyNullableString(Some("WooHoo".into())),
