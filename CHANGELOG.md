@@ -1,7 +1,5 @@
 # Unreleased
 
-# Version 2.2.0
-
 * Add support for structs with internal references to DieselNewTypes (`ethan-lowman-fp` [#30](https://github.com/quodlibetor/diesel-derive-newtype/pull/30)):
 
   ```rust
