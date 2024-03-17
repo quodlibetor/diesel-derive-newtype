@@ -146,7 +146,19 @@ the underlying SQL type.
 
 ## Releasing
 
+This workflow uses:
 
+* [cargo-readme](https://crates.io/crates/cargo-readme)
+* [cargo-release](https://crates.io/crates/cargo-release)
+
+Run, note that we always release patch releases unless diesel has got a new
+release:
+
+```
+cargo readme > README.md
+git diff --exit-code --quiet README.* || (git add README.* && git commit -m "chore: Update README")
+cargo release patch
+```
 
 ## License
 

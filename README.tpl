@@ -50,7 +50,7 @@ release:
 ```
 cargo readme > README.md
 git diff --exit-code --quiet README.* || (git add README.* && git commit -m "chore: Update README")
-cargo release patch 
+cargo release patch
 ```
 
 ## License
