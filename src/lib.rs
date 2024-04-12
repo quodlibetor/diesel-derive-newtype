@@ -149,17 +149,17 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
     };
 
     // Required to be able to insert/read from the db, don't allow searching
-    let to_sql_impl = gen_tosql(&name, &wrapped_ty);
-    let as_expr_impl = gen_asexpressions(&name, &wrapped_ty);
+    let to_sql_impl = gen_tosql(name, wrapped_ty);
+    let as_expr_impl = gen_asexpressions(name, wrapped_ty);
 
     // raw deserialization
-    let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
+    let from_sql_impl = gen_from_sql(name, wrapped_ty);
 
     // querying
-    let queryable_impl = gen_queryable(&name, &wrapped_ty);
+    let queryable_impl = gen_queryable(name, wrapped_ty);
 
     // since our query doesn't take varargs it's fine for the DB to cache it
-    let query_id_impl = gen_query_id(&name);
+    let query_id_impl = gen_query_id(name);
 
     wrap_impls_in_const(&quote! {
         #to_sql_impl
