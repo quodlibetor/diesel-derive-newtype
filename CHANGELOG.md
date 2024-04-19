@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix new non_local_definitions lint in nightly (#31)
+
 # Version 2.1.1
 
 * Add support for structs with internal references to DieselNewTypes (`ethan-lowman-fp` [#30](https://github.com/quodlibetor/diesel-derive-newtype/pull/30)):
