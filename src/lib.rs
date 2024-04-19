@@ -149,31 +149,28 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
     };
 
     // Required to be able to insert/read from the db, don't allow searching
-    let to_sql_impl = gen_tosql(&name, &wrapped_ty);
-    let as_expr_impl = gen_asexpressions(&name, &wrapped_ty);
+    let to_sql_impl = gen_tosql(name, wrapped_ty);
+    let as_expr_impl = gen_asexpressions(name, wrapped_ty);
 
     // raw deserialization
-    let from_sql_impl = gen_from_sql(&name, &wrapped_ty);
+    let from_sql_impl = gen_from_sql(name, wrapped_ty);
 
     // querying
-    let queryable_impl = gen_queryable(&name, &wrapped_ty);
+    let queryable_impl = gen_queryable(name, wrapped_ty);
 
     // since our query doesn't take varargs it's fine for the DB to cache it
-    let query_id_impl = gen_query_id(&name);
+    let query_id_impl = gen_query_id(name);
 
-    wrap_impls_in_const(
-        name,
-        &quote! {
-            #to_sql_impl
-            #as_expr_impl
+    wrap_impls_in_const(&quote! {
+        #to_sql_impl
+        #as_expr_impl
 
-            #from_sql_impl
+        #from_sql_impl
 
-            #queryable_impl
+        #queryable_impl
 
-            #query_id_impl
-        },
-    )
+        #query_id_impl
+    })
 }
 
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
@@ -279,15 +276,9 @@ fn gen_query_id(name: &syn::Ident) -> TokenStream {
     }
 }
 
-/// This guarantees that items we generate don't polute the module scope
-///
-/// We use the const name as a form of documentation of the generated code
-fn wrap_impls_in_const(ty_name: &syn::Ident, item: &TokenStream) -> TokenStream {
-    let name = ty_name.to_string().to_uppercase();
-    let dummy_const = syn::Ident::new(
-        &format!("_IMPL_DIESEL_NEW_TYPE_FOR_{}", name),
-        Span::call_site(),
-    );
+/// This guarantees that items we generate don't pollute the module scope
+fn wrap_impls_in_const(item: &TokenStream) -> TokenStream {
+    let dummy_const = syn::Ident::new("_", Span::call_site());
     quote! {
         const #dummy_const: () = {
             #item
