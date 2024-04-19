@@ -1,5 +1,7 @@
 # Unreleased
 
+# Version 2.1.2
+
 * Fix new non_local_definitions lint in nightly (#31)
 
 # Version 2.1.1
