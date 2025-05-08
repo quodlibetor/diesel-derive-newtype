@@ -4,14 +4,23 @@ Easy-peasy support of newtypes inside of Diesel.
 
 [![Rust](https://github.com/quodlibetor/diesel-derive-newtype/actions/workflows/test.yml/badge.svg?branch=diesel-2)](https://github.com/quodlibetor/diesel-derive-newtype/actions/workflows/test.yml) [![Crates.io Version](https://img.shields.io/crates/v/diesel-derive-newtype.svg)](https://crates.io/crates/diesel-derive-newtype)
 
+### Status
+
+diesel-derive-newtype is small and basically complete -- except for some features
+that aren't supported by Diesel (see "limitations", below). Additionally, I don't
+use diesel on a daily basis any more, so most maintenance comes from bug reports
+or PRs, please open them!
+
 ## Installation
 
 diesel-derive-newtype supports Diesel according to its major version -- 0.x
 through 1.x support the corresponding diesel versions, 2.0 supports diesel 2.0,
-and 2.1 supports 2.1.
+and 2.1 supports 2.1. Generally new versions of diesel-derive-newtype are
+released when compilation or tests are observed to fail with a newer version
+of diesel, so newer versions of diesel than the released version of 
+diesel-derive-newtype *may* work. Bug reports and PRs welcome.
 
 New features are only developed for the currently supported version of Diesel.
-
 
 ```toml
 [dependencies]
