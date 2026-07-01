@@ -171,27 +171,15 @@ use proc_macro2::{Span, TokenStream};
 #[proc_macro_derive(DieselNewType, attributes(diesel_newtype))]
 #[doc(hidden)]
 pub fn diesel_new_type(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast = syn::parse(input).unwrap();
-
-    expand_sql_types(&ast)
+    syn::parse(input)
+        .and_then(|ast| expand_sql_types(&ast))
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }
 
 fn expand_sql_types(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let name = &ast.ident;
-    let wrapped_ty = match ast.data {
-        syn::Data::Struct(ref data) => {
-            let mut iter = data.fields.iter();
-            match (iter.next(), iter.next()) {
-                (Some(field), None) => &field.ty,
-                (_, _) => panic!(
-                    "#[derive(DieselNewType)] can only be used with structs with exactly one field"
-                ),
-            }
-        }
-        _ => panic!("#[derive(DieselNewType)] can only be used with structs with a single field"),
-    };
+    let wrapped_ty = validate_wrapped_type(ast)?;
 
     // `None` = wrap the inner value directly; `Some(ty)` = deserialize `ty` and
     // `.try_into()` the newtype. A bare `try_from` defaults `ty` to the field
@@ -229,6 +217,30 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     }))
 }
 
+/// Construct an error if the targetted type is not a newtype.
+///
+/// `#[derive(DieselNewType)]` only makes sense for a single-field tuple struct
+/// so reject anything else with a pointed error rather than emitting code that
+/// fails to compile downstream.
+fn validate_wrapped_type(ast: &syn::DeriveInput) -> syn::Result<&syn::Type> {
+    const HELP: &str = "#[derive(DieselNewType)] can only be used on a tuple \
+        struct with exactly one field, e.g. `struct Foo(i64);`";
+    let data = match &ast.data {
+        syn::Data::Struct(data) => data,
+        // enum / union: span the name so the error points at the type.
+        syn::Data::Enum(_) | syn::Data::Union(_) => {
+            return Err(syn::Error::new_spanned(&ast.ident, HELP))
+        }
+    };
+    match &data.fields {
+        syn::Fields::Unnamed(fields) if fields.unnamed.len() == 1 => Ok(&fields.unnamed[0].ty),
+        // unit struct has no fields to point at, so span the name instead.
+        syn::Fields::Unit => Err(syn::Error::new_spanned(&ast.ident, HELP)),
+        // wrong field count, or a named field: span the fields themselves.
+        fields => Err(syn::Error::new_spanned(fields, HELP)),
+    }
+}
+
 // Built and consumed exactly once per derive expansion, so the size gap between
 // the unit variants and `InnerType`'s `syn::Type` is irrelevant here.
 #[expect(clippy::large_enum_variant)]
@@ -252,6 +264,18 @@ fn parse_try_from(ast: &syn::DeriveInput) -> syn::Result<TryFromAttr> {
     for attr in &ast.attrs {
         if !attr.path().is_ident("diesel_newtype") {
             continue;
+        }
+        // Catch `#[diesel_newtype]` and `#[diesel_newtype()]` up front: syn's
+        // own error for these ("unexpected end of input") is opaque, so point
+        // the user at the real syntax instead.
+        match &attr.meta {
+            syn::Meta::List(list) if !list.tokens.is_empty() => {}
+            _ => {
+                return Err(syn::Error::new_spanned(
+                    attr,
+                    "empty `#[diesel_newtype]` does nothing; write `#[diesel_newtype(try_from = Type)]`",
+                ))
+            }
         }
         attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("try_from") {

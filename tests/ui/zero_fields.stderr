@@ -1,0 +1,5 @@
+error: #[derive(DieselNewType)] can only be used on a tuple struct with exactly one field, e.g. `struct Foo(i64);`
+ --> tests/ui/zero_fields.rs:4:18
+  |
+4 | struct ZeroFields();
+  |                  ^^

@@ -1,0 +1,8 @@
+error: #[derive(DieselNewType)] can only be used on a tuple struct with exactly one field, e.g. `struct Foo(i64);`
+ --> tests/ui/named_field.rs:4:14
+  |
+4 |   struct Named {
+  |  ______________^
+5 | |     value: i64,
+6 | | }
+  | |_^

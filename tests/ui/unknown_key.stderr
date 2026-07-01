@@ -1,0 +1,5 @@
+error: unsupported #[diesel_newtype(...)] key, expected `try_from` or `try_from = Type`
+ --> tests/ui/unknown_key.rs:4:18
+  |
+4 | #[diesel_newtype(bogus = i64)]
+  |                  ^^^^^

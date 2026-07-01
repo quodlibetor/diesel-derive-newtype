@@ -1,0 +1,5 @@
+error: duplicate `try_from` in #[diesel_newtype(...)]
+ --> tests/ui/duplicate_try_from.rs:4:34
+  |
+4 | #[diesel_newtype(try_from = i64, try_from = i64)]
+  |                                  ^^^^^^^^
