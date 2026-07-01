@@ -11,6 +11,10 @@ readme = "README.md"
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
 # Inherited MSRV of `diesel`.
 rust-version = "1.84.0"
+# MSRV-aware dependency resolution: prefer dep versions compatible with
+# rust-version above, so a fresh resolve on 1.84 (e.g. CI, which does not commit
+# Cargo.lock) does not pull in deps that need a newer toolchain or edition.
+resolver = "3"
 
 [dependencies]
 proc-macro2 = "1.0.51"
