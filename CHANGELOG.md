@@ -1,5 +1,7 @@
 # Unreleased
 
+# Version 2.1.3
+
 * Add `#[diesel_newtype(try_from = InnerType)]` to build newtypes fallibly when
   reading from the database, so type invariants can be upheld
   ([#12](https://github.com/quodlibetor/diesel-derive-newtype/issues/12)). The

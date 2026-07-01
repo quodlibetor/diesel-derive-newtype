@@ -1,6 +1,6 @@
 [package]
 name = "diesel-derive-newtype"
-version = "2.1.2"
+version = "2.1.3"
 authors = ["Brandon W Maister <quodlibetor@gmail.com>"]
 categories = ["database", "rust-patterns"]
 description = "Automatically connect newtypes to Diesel using their wrapped type"
