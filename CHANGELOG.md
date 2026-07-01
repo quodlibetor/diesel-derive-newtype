@@ -1,5 +1,20 @@
 # Unreleased
 
+* Add `#[diesel_newtype(try_from = InnerType)]` to build newtypes fallibly when
+  reading from the database, so type invariants can be upheld
+  ([#12](https://github.com/quodlibetor/diesel-derive-newtype/issues/12)). The
+  read path deserializes `InnerType` and calls `.try_into()`; the conversion
+  error is preserved (must be convertible into `Box<dyn Error + Send + Sync>`).
+  Infallible `From` conversions work too. The write path is unchanged. A bare
+  `#[diesel_newtype(try_from)]` is shorthand for `try_from = <field type>`, the
+  common case.
+* Better error messages: applying the derive to something other than a
+  single-field tuple struct (an enum, a named-field struct, wrong field count,
+  etc.), or writing an empty `#[diesel_newtype]`/`#[diesel_newtype()]`, now
+  produces a clear compile error pointing at the offending code instead of a
+  proc-macro panic or an opaque parser error. Named single-field structs are
+  now rejected explicitly (they previously emitted code that failed to compile).
+
 # Version 2.1.2
 
 * Fix new non_local_definitions lint in nightly (#31)

@@ -30,3 +30,23 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+
+  # The trybuild compile-fail tests snapshot exact compiler output, which drifts
+  # between rustc versions, so they run only on the pinned MSRV toolchain (the
+  # one their `.stderr` files were generated against) rather than the matrix.
+  ui:
+    name: UI compile-fail tests (MSRV)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.84.0
+          override: true
+      - name: Compile-fail tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features ui --test compile-fail

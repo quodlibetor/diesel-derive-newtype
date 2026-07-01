@@ -11,6 +11,10 @@ readme = "README.md"
 repository = "https://github.com/quodlibetor/diesel-derive-newtype"
 # Inherited MSRV of `diesel`.
 rust-version = "1.84.0"
+# MSRV-aware dependency resolution: prefer dep versions compatible with
+# rust-version above, so a fresh resolve on 1.84 (e.g. CI, which does not commit
+# Cargo.lock) does not pull in deps that need a newer toolchain or edition.
+resolver = "3"
 
 [dependencies]
 proc-macro2 = "1.0.51"
@@ -20,8 +24,18 @@ quote = "1.0.23"
 [badges]
 maintenance = { status = "passively-maintained" }
 
+[features]
+# Opt-in `trybuild` UI tests that snapshot the derive's compile errors. Their
+# `.stderr` files are pinned to the MSRV toolchain (rustc 1.84.0) and drift on
+# other versions, so they are gated out of the default `cargo test` and the
+# stable/beta CI matrix; a dedicated 1.84.0 job runs `cargo test --features ui`.
+# Regenerate after intentional message changes with:
+#   TRYBUILD=overwrite cargo +1.84.0 test --features ui
+ui = []
+
 [dev-dependencies]
 diesel = { version = "2.1.0", features = ["sqlite"], default-features = false }
+trybuild = "1.0"
 
 [lib]
 proc-macro = true

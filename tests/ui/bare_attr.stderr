@@ -1,0 +1,5 @@
+error: empty `#[diesel_newtype]` does nothing; write `#[diesel_newtype(try_from = Type)]`
+ --> tests/ui/bare_attr.rs:4:1
+  |
+4 | #[diesel_newtype]
+  | ^^^^^^^^^^^^^^^^^

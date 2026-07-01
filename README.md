@@ -17,10 +17,11 @@ diesel-derive-newtype supports Diesel according to its major version -- 0.x
 through 1.x support the corresponding diesel versions, 2.0 supports diesel 2.0,
 and 2.1 supports 2.1. Generally new versions of diesel-derive-newtype are
 released when compilation or tests are observed to fail with a newer version
-of diesel, so newer versions of diesel than the released version of 
+of diesel, so newer versions of diesel than the released version of
 diesel-derive-newtype *may* work. Bug reports and PRs welcome.
 
 New features are only developed for the currently supported version of Diesel.
+
 
 ```toml
 [dependencies]
@@ -96,6 +97,47 @@ Oooohhh. Ahhhh.
 See [the tests][] for a more complete example.
 
 [the tests]: https://github.com/quodlibetor/diesel-derive-newtype/blob/master/tests/db-roundtrips.rs
+
+## Upholding invariants when reading (`try_from`)
+
+By default the derive builds your newtype by wrapping the value read from
+the database directly, which means an invalid value in the database becomes
+an invalid instance of your type. If your newtype has invariants (for
+example a private field that only accepts some values), add
+`#[diesel_newtype(try_from = InnerType)]`. The read path (`FromSql` and
+`Queryable`) will then deserialize `InnerType` and call `.try_into()` to
+build your newtype, so construction can fail:
+
+```rust
+#[derive(Debug, PartialEq, Eq, Hash, DieselNewType)]
+#[diesel_newtype(try_from = i32)]
+pub struct Even(i32); // private inner field upholds an invariant; try_from applies it on DB reads
+
+#[derive(Debug)]
+pub struct NotEven(i32);
+impl std::error::Error for NotEven {}
+
+impl TryFrom<i32> for Even {
+    type Error = NotEven;
+    fn try_from(v: i32) -> Result<Self, NotEven> {
+        if v % 2 == 0 { Ok(Even(v)) } else { Err(NotEven(v)) }
+    }
+}
+```
+
+Notes:
+
+* The conversion accepts any type reachable via `.try_into()`, so an
+  infallible `From<InnerType>` works too (its `TryFrom` error is
+  `Infallible`).
+* The `TryFrom` error is preserved, not stringified: it must be convertible
+  into `Box<dyn std::error::Error + Send + Sync>` (i.e. implement
+  `std::error::Error + Send + Sync + 'static`).
+* Only the read path is affected. The write path (`ToSql`, `AsExpression`)
+  always serializes the inner field directly, so no `Clone`/`Into` bound is
+  required and borrowed inserts keep working.
+* This does *not* close the [type hole](#limitations) below: you can still
+  filter a column by the raw underlying SQL type.
 
 ## Limitations
 [limitations]: #limitations
