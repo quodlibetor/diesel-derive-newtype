@@ -62,6 +62,49 @@
 //!
 //! [the tests]: https://github.com/quodlibetor/diesel-derive-newtype/blob/master/tests/db-roundtrips.rs
 //!
+//! # Upholding invariants when reading (`try_from`)
+//!
+//! By default the derive builds your newtype by wrapping the value read from
+//! the database directly, which means an invalid value in the database becomes
+//! an invalid instance of your type. If your newtype has invariants (for
+//! example a private field that only accepts some values), add
+//! `#[diesel_newtype(try_from = InnerType)]` or `#[diesel_newtype(try_from)]`
+//! if the from type is identical to the type in the newtype. The read path
+//! (`FromSql` and `Queryable`) will then deserialize into `InnerType` and call
+//! `.try_into()` to build your newtype, so construction can fail:
+//!
+//! ```
+//! # use std::convert::TryFrom;
+//! # use diesel_derive_newtype::DieselNewType;
+//! #[derive(Debug, PartialEq, Eq, Hash, DieselNewType)]
+//! #[diesel_newtype(try_from = i32)]
+//! pub struct Even(i32); // private inner field upholds an invariant; try_from applies it on DB reads
+//!
+//! #[derive(Debug)]
+//! pub struct NotEvenError(i32);
+//! # impl std::fmt::Display for NotEvenError {
+//! #     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { write!(f, "not even") }
+//! # }
+//! impl std::error::Error for NotEvenError {}
+//!
+//! impl TryFrom<i32> for Even {
+//!     type Error = NotEvenError;
+//!     fn try_from(v: i32) -> Result<Self, NotEvenError> {
+//!         if v % 2 == 0 { Ok(Even(v)) } else { Err(NotEvenError(v)) }
+//!     }
+//! }
+//! # fn main() {}
+//! ```
+//!
+//! Notes:
+//!
+//! * The conversion accepts any type reachable via `.try_into()`, so an
+//!   infallible `From<InnerType>` works too.
+//! * The `TryFrom` error is cast into `Box<dyn std::error::Error + Send +
+//!   Sync>`, it must implement `std::error::Error + Send + Sync + 'static`.
+//! * Only the read path is affected. The write path (`ToSql`, `AsExpression`)
+//!   always serializes the inner field directly.
+//!
 //! # Limitations
 //! [limitations]: #limitations
 //!
@@ -125,15 +168,17 @@ extern crate proc_macro2;
 
 use proc_macro2::{Span, TokenStream};
 
-#[proc_macro_derive(DieselNewType)]
+#[proc_macro_derive(DieselNewType, attributes(diesel_newtype))]
 #[doc(hidden)]
 pub fn diesel_new_type(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse(input).unwrap();
 
-    expand_sql_types(&ast).into()
+    expand_sql_types(&ast)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
 
-fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
+fn expand_sql_types(ast: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let name = &ast.ident;
     let wrapped_ty = match ast.data {
         syn::Data::Struct(ref data) => {
@@ -148,20 +193,31 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
         _ => panic!("#[derive(DieselNewType)] can only be used with structs with a single field"),
     };
 
-    // Required to be able to insert/read from the db, don't allow searching
+    // `None` = wrap the inner value directly; `Some(ty)` = deserialize `ty` and
+    // `.try_into()` the newtype. A bare `try_from` defaults `ty` to the field
+    // type, which is the usual case.
+    let from_ty = match parse_try_from(ast)? {
+        TryFromAttr::None => None,
+        TryFromAttr::Bare => Some(wrapped_ty.clone()),
+        TryFromAttr::InnerType(ty) => Some(ty),
+    };
+
+    // Required to be able to insert/read from the db, don't allow searching.
+    // The write path always serializes the inner field directly, so it is
+    // unaffected by `try_from` (and needs no `Clone`/`Into`, unlike serde).
     let to_sql_impl = gen_tosql(name, wrapped_ty);
     let as_expr_impl = gen_asexpressions(name, wrapped_ty);
 
     // raw deserialization
-    let from_sql_impl = gen_from_sql(name, wrapped_ty);
+    let from_sql_impl = gen_from_sql(name, wrapped_ty, from_ty.as_ref());
 
     // querying
-    let queryable_impl = gen_queryable(name, wrapped_ty);
+    let queryable_impl = gen_queryable(name, wrapped_ty, from_ty.as_ref());
 
     // since our query doesn't take varargs it's fine for the DB to cache it
     let query_id_impl = gen_query_id(name);
 
-    wrap_impls_in_const(&quote! {
+    Ok(wrap_impls_in_const(&quote! {
         #to_sql_impl
         #as_expr_impl
 
@@ -170,7 +226,56 @@ fn expand_sql_types(ast: &syn::DeriveInput) -> TokenStream {
         #queryable_impl
 
         #query_id_impl
-    })
+    }))
+}
+
+// Built and consumed exactly once per derive expansion, so the size gap between
+// the unit variants and `InnerType`'s `syn::Type` is irrelevant here.
+#[expect(clippy::large_enum_variant)]
+enum TryFromAttr {
+    /// no `try_from`: wrap the inner type with no constructor
+    None,
+    /// bare `#[diesel_newtype(try_from)]`: deserialize the newtype's own field type
+    /// and `.try_into()` it (the common case, where the intermediate type *is*
+    /// the wrapped type).
+    Bare,
+    /// `#[diesel_newtype(try_from = Ty)]`: deserialize `Ty` and `.try_into()` it.
+    InnerType(syn::Type),
+}
+
+/// Parses `#[diesel_newtype(try_from = SomeType)]` or a bare `#[diesel_newtype(try_from)]`.
+///
+/// `.try_into()` upholds invariants on the read path; the infallible
+/// `From` case is covered too, via the std blanket `Into` -> `TryInto` impls.
+fn parse_try_from(ast: &syn::DeriveInput) -> syn::Result<TryFromAttr> {
+    let mut try_from = TryFromAttr::None;
+    for attr in &ast.attrs {
+        if !attr.path().is_ident("diesel_newtype") {
+            continue;
+        }
+        attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("try_from") {
+                if !matches!(try_from, TryFromAttr::None) {
+                    return Err(meta.error("duplicate `try_from` in #[diesel_newtype(...)]"));
+                }
+                // A bare `try_from` is terminated by `,` or the end of the
+                // attribute; anything else must be `try_from = Type`, and
+                // `meta.value()` reports a pointed "expected `=`" if the
+                // separator is wrong (rather than a downstream "expected `,`").
+                try_from = if meta.input.is_empty() || meta.input.peek(syn::Token![,]) {
+                    TryFromAttr::Bare
+                } else {
+                    TryFromAttr::InnerType(meta.value()?.parse::<syn::Type>()?)
+                };
+                Ok(())
+            } else {
+                Err(meta.error(
+                    "unsupported #[diesel_newtype(...)] key, expected `try_from` or `try_from = Type`",
+                ))
+            }
+        })?;
+    }
+    Ok(try_from)
 }
 
 fn gen_tosql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
@@ -233,36 +338,64 @@ fn gen_asexpressions(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
     }
 }
 
-fn gen_from_sql(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
+/// Builds the newtype from a value bound to `inner`: with `try_from`, a fallible
+/// `try_into()` that preserves the conversion error (via `Into` into diesel's
+/// boxed error); without it, a direct wrap. Shared by `FromSql` and `Queryable`
+/// so the conversion semantics live in exactly one place.
+fn gen_build_from_inner(name: &syn::Ident, try_from: Option<&syn::Type>) -> TokenStream {
+    match try_from {
+        Some(_) => quote! {
+            ::std::convert::TryInto::try_into(inner)
+                .map_err(::std::convert::Into::into)
+        },
+        None => quote! { ::std::result::Result::Ok(#name(inner)) },
+    }
+}
+
+fn gen_from_sql(
+    name: &syn::Ident,
+    wrapped_ty: &syn::Type,
+    try_from: Option<&syn::Type>,
+) -> TokenStream {
+    // When `try_from` is set, deserialize the intermediate type rather than the
+    // inner field type; otherwise they're the same.
+    let from_ty = try_from.unwrap_or(wrapped_ty);
+    let build = gen_build_from_inner(name, try_from);
     quote! {
         impl<ST, DB> diesel::deserialize::FromSql<ST, DB> for #name
         where
-            #wrapped_ty: diesel::deserialize::FromSql<ST, DB>,
+            #from_ty: diesel::deserialize::FromSql<ST, DB>,
             DB: diesel::backend::Backend,
             DB: diesel::sql_types::HasSqlType<ST>,
         {
-            fn from_sql(raw: DB::RawValue<'_>)
-            -> ::std::result::Result<Self, Box<::std::error::Error + Send + Sync>>
+            fn from_sql(raw: DB::RawValue<'_>) -> diesel::deserialize::Result<Self>
             {
-                diesel::deserialize::FromSql::<ST, DB>::from_sql(raw)
-                    .map(#name)
+                let inner: #from_ty =
+                    diesel::deserialize::FromSql::<ST, DB>::from_sql(raw)?;
+                #build
             }
         }
     }
 }
 
-fn gen_queryable(name: &syn::Ident, wrapped_ty: &syn::Type) -> TokenStream {
+fn gen_queryable(
+    name: &syn::Ident,
+    wrapped_ty: &syn::Type,
+    try_from: Option<&syn::Type>,
+) -> TokenStream {
+    let from_ty = try_from.unwrap_or(wrapped_ty);
+    let build = gen_build_from_inner(name, try_from);
     quote! {
         impl<ST, DB> diesel::deserialize::Queryable<ST, DB> for #name
         where
-            #wrapped_ty: diesel::deserialize::FromStaticSqlRow<ST, DB>,
+            #from_ty: diesel::deserialize::FromStaticSqlRow<ST, DB>,
             DB: diesel::backend::Backend,
             DB: diesel::sql_types::HasSqlType<ST>,
         {
-            type Row = #wrapped_ty;
+            type Row = #from_ty;
 
-            fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
-                Ok(#name(row))
+            fn build(inner: Self::Row) -> diesel::deserialize::Result<Self> {
+                #build
             }
         }
     }
