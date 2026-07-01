@@ -17,10 +17,11 @@ diesel-derive-newtype supports Diesel according to its major version -- 0.x
 through 1.x support the corresponding diesel versions, 2.0 supports diesel 2.0,
 and 2.1 supports 2.1. Generally new versions of diesel-derive-newtype are
 released when compilation or tests are observed to fail with a newer version
-of diesel, so newer versions of diesel than the released version of 
+of diesel, so newer versions of diesel than the released version of
 diesel-derive-newtype *may* work. Bug reports and PRs welcome.
 
 New features are only developed for the currently supported version of Diesel.
+
 
 ```toml
 [dependencies]
